@@ -67,6 +67,7 @@ const ANIV_CFG = Object.freeze({
      * Quando usar: leitores que montam lista de membros.
      */
     COL_NAME: 'MEMBRO',
+    COL_RGA: 'RGA',
     COL_BIRTHDATE: 'DATA DE NASCIMENTO',  // aceita DD/MM/AAAA ou DD/MM (depende do parser)
     COL_EMAIL: 'EMAIL',
     COL_ROLE: 'Cargo/função atual',
@@ -163,6 +164,31 @@ const ANIV_CFG = Object.freeze({
     COLOR_TEXT: '#000000',
     BORDER: '#167d0a',
     QUOTE: '“Cultivar o Conhecimento Para Colher Sabedoria”',
+  }),
+
+  // ==========================================================
+// 7) VIGÊNCIAS / DESTINATÁRIO DA COMUNICAÇÃO
+// ==========================================================
+  VIGENCIA: Object.freeze({
+    DIRETORIAS_KEY: 'VIGENCIA_DIRETORIAS',
+    MEMBROS_DIRETORIAS_KEY: 'VIGENCIA_MEMBROS_DIRETORIAS',
+
+    // Aba Diretorias
+    DIRETORIAS_COL_ID: 'ID_Diretoria',
+    DIRETORIAS_COL_START: 'Início_Mandato',
+    DIRETORIAS_COL_END: 'Fim_Mandato',
+
+    // Aba Membros_Diretoria
+    MEMBROS_COL_NAME: 'Nome',
+    MEMBROS_COL_RGA: 'RGA',
+    MEMBROS_COL_ROLE: 'Cargo/Função',
+    MEMBROS_COL_BOARD_ID: 'ID_Diretoria',
+    MEMBROS_COL_START: 'Data_Início',
+    MEMBROS_COL_END: 'Data_Fim',
+    MEMBROS_COL_END_PLANNED: 'Data_Fim_previsto',
+
+    // Cargo que deve receber o resumo semanal
+    COMM_ROLE_NAME: 'Coordenador(a) de Comunicação',
   }),
 });
 

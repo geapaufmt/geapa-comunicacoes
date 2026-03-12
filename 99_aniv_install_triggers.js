@@ -1,27 +1,49 @@
-function aniv_install_triggers() {
-  // apaga triggers antigos desse módulo para não duplicar
-  const handlers = [
-    'checkBirthdaysToday',
-    'weeklyBirthdayDigest',
-    'checkProfsBirthdaysToday',
-    'weeklyProfsBirthdayDigest',
-    'checkCommemorativesToday',
-    'weeklyCommemorativesDigest'
-  ];
+/**************************************
+ * 50_aniv_install.gs
+ * Instala triggers do módulo de aniversários
+ **************************************/
 
-  ScriptApp.getProjectTriggers().forEach(t => {
-    if (handlers.includes(t.getHandlerFunction())) {
+function aniv_installTriggers() {
+  const all = ScriptApp.getProjectTriggers();
+
+  all.forEach(t => {
+    const fn = t.getHandlerFunction();
+    if (
+      fn === 'checkBirthdaysToday' ||
+      fn === 'checkProfsBirthdaysToday' ||
+      fn === 'weeklyBirthdayDigest' ||
+      fn === 'weeklyProfsBirthdayDigest'
+    ) {
       ScriptApp.deleteTrigger(t);
     }
   });
 
-  // diários (09h) — ajuste se quiser
-  ScriptApp.newTrigger('checkBirthdaysToday').timeBased().everyDays(1).atHour(7).create();
-  ScriptApp.newTrigger('checkProfsBirthdaysToday').timeBased().everyDays(1).atHour(7).create();
-  ScriptApp.newTrigger('checkCommemorativesToday').timeBased().everyDays(1).atHour(7).create();
+  // aniversário individual diário
+  ScriptApp.newTrigger('checkBirthdaysToday')
+    .timeBased()
+    .everyDays(1)
+    .atHour(7)
+    .create();
 
-  // semanais (segunda 09h)
-  ScriptApp.newTrigger('weeklyBirthdayDigest').timeBased().everyWeeks(1).onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(7).create();
-  ScriptApp.newTrigger('weeklyProfsBirthdayDigest').timeBased().everyWeeks(1).onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(7).create();
-  ScriptApp.newTrigger('weeklyCommemorativesDigest').timeBased().everyWeeks(1).onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(7).create();
+  // professores diário
+  ScriptApp.newTrigger('checkProfsBirthdaysToday')
+    .timeBased()
+    .everyDays(1)
+    .atHour(7)
+    .create();
+
+  // resumo semanal: segunda-feira
+  ScriptApp.newTrigger('weeklyBirthdayDigest')
+    .timeBased()
+    .onWeekDay(ScriptApp.WeekDay.MONDAY)
+    .atHour(7)
+    .create();
+
+  ScriptApp.newTrigger('weeklyProfsBirthdayDigest')
+    .timeBased()
+    .onWeekDay(ScriptApp.WeekDay.MONDAY)
+    .atHour(7)
+    .create();
+
+  Logger.log('Triggers de aniversários instalados com sucesso.');
 }
