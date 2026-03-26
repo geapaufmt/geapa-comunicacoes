@@ -83,7 +83,7 @@ const ANIV_CFG = Object.freeze({
     /** Cabeçalhos esperados */
     COL_NAME: 'Nome',
     COL_EMAIL: 'E-mail',
-    COL_BIRTHDATE: 'DataNascimento',      // pode ser Date do Sheets ou texto DD/MM(/AAAA)
+    COL_BIRTHDATE: 'Data de Nascimento',      // pode ser Date do Sheets ou texto DD/MM(/AAAA)
   }),
 
   // ==========================================================
