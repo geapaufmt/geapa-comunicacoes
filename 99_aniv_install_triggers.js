@@ -12,7 +12,11 @@ function aniv_installTriggers() {
       fn === 'checkBirthdaysToday' ||
       fn === 'checkProfsBirthdaysToday' ||
       fn === 'weeklyBirthdayDigest' ||
-      fn === 'weeklyProfsBirthdayDigest'
+      fn === 'weeklyProfsBirthdayDigest' ||
+      fn === 'processScheduledCommunicationsToday' ||
+      fn === 'processCommunicationsOutbox' ||
+      fn === 'processAcademicNoticesToday' ||
+      fn === 'processAcademicNoticeOutbox'
     ) {
       ScriptApp.deleteTrigger(t);
     }
@@ -39,6 +43,25 @@ function aniv_installTriggers() {
     .atHour(7)
     .create();
 
+  // resumo semanal de professores: segunda-feira
+  ScriptApp.newTrigger('weeklyProfsBirthdayDigest')
+    .timeBased()
+    .onWeekDay(ScriptApp.WeekDay.MONDAY)
+    .atHour(7)
+    .create();
 
-  Logger.log('Triggers de aniversários instalados com sucesso.');
+  // avisos academicos diarios
+  ScriptApp.newTrigger('processScheduledCommunicationsToday')
+    .timeBased()
+    .everyDays(1)
+    .atHour(6)
+    .create();
+
+  // processamento da fila central de saida
+  ScriptApp.newTrigger('processCommunicationsOutbox')
+    .timeBased()
+    .everyHours(1)
+    .create();
+
+  Logger.log('Triggers de comunicacoes instalados com sucesso.');
 }

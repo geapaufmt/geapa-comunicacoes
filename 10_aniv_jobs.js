@@ -1,74 +1,25 @@
 /**************************************
  * 10_aniv_jobs.gs
- * JOBS/ENTRADAS (funções chamadas por triggers)
+ * Jobs/entradas do modulo.
  *
- * Ideia:
- * - Cada job é pequeno e só orquestra:
- *   1) calcula datas
- *   2) lê linhas
- *   3) chama envio
- *   4) registra logs
+ * Nesta refatoracao, os pontos de entrada antigos foram preservados,
+ * mas agora delegam para o motor central de comunicacoes.
  **************************************/
 
-/**
- * ------------------------------------------------------------
- * checkBirthdaysToday()
- * ------------------------------------------------------------
- * Envia:
- * - E-mail individual para cada aniversariante (membro).
- * - Resumo para Comunicação (lista do dia).
- *
- * Observação importante:
- * - Usa lock para evitar duplicidade se dois triggers rodarem juntos.
- */
 function checkBirthdaysToday() {
   const runId = GEAPA_CORE.coreRunId();
-  GEAPA_CORE.coreLogInfo(runId, 'checkBirthdaysToday: INÍCIO');
+  GEAPA_CORE.coreLogInfo(runId, 'checkBirthdaysToday: INICIO');
 
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(15000)) {
-    GEAPA_CORE.coreLogWarn(runId, 'Lock não obtido — evitando execução concorrente.');
+    GEAPA_CORE.coreLogWarn(runId, 'Lock nao obtido, evitando execucao concorrente.', {});
     return;
   }
 
   try {
-    const today = aniv_now_();
-    const start = aniv_startOfDay_(today);
-    const endExclusive = aniv_addDays_(start, 1);
-
-    const rows = aniv_getMemberBirthdaysForWindow_(start, endExclusive);
-
-    GEAPA_CORE.coreLogInfo(runId, 'checkBirthdaysToday: encontrados', { count: rows.length });
-
-    rows.forEach(r => {
-      try {
-        aniv_sendBirthdayMessageToMember_(r, start);
-      } catch (e) {
-        GEAPA_CORE.coreLogError(runId, 'Erro ao enviar para membro', {
-          nome: r.name,
-          email: r.email,
-          err: String(e),
-          stack: e && e.stack
-        });
-      }
-    });
-
-    // aviso diário consolidado para a comunicação (membros + profs), apenas se houver aniversariantes
-    try {
-      const profRows = aniv_getProfBirthdaysForWindow_(start, endExclusive);
-      if (rows.length || profRows.length) {
-        aniv_notifyCommunicationCombined_(rows, profRows, start, start, false);
-      } else {
-        GEAPA_CORE.coreLogInfo(runId, 'checkBirthdaysToday: resumo diário não enviado (sem aniversariantes)', {});
-      }
-    } catch (e) {
-      GEAPA_CORE.coreLogError(runId, 'Erro ao enviar resumo diário consolidado para comunicação', {
-        err: String(e),
-        stack: e && e.stack
-      });
-    }
-
-    GEAPA_CORE.coreLogInfo(runId, 'checkBirthdaysToday: FIM OK', { count: rows.length });
+    const result = comms_processBirthdaysTodayBySource_('MEMBERS_ATUAIS');
+    GEAPA_CORE.coreLogInfo(runId, 'checkBirthdaysToday: FIM OK', result);
+    return result;
   } finally {
     lock.releaseLock();
   }
@@ -76,39 +27,18 @@ function checkBirthdaysToday() {
 
 function checkProfsBirthdaysToday() {
   const runId = GEAPA_CORE.coreRunId();
-  GEAPA_CORE.coreLogInfo(runId, 'checkProfsBirthdaysToday: INÍCIO');
+  GEAPA_CORE.coreLogInfo(runId, 'checkProfsBirthdaysToday: INICIO');
 
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(15000)) {
-    GEAPA_CORE.coreLogWarn(runId, 'Lock não obtido — evitando execução concorrente.');
+    GEAPA_CORE.coreLogWarn(runId, 'Lock nao obtido, evitando execucao concorrente.', {});
     return;
   }
 
   try {
-    const today = aniv_now_();
-    const start = aniv_startOfDay_(today);
-    const endExclusive = aniv_addDays_(start, 1);
-
-    const rows = aniv_getProfBirthdaysForWindow_(start, endExclusive);
-
-    rows.forEach(r => {
-      try {
-        aniv_sendProfBirthdayEmail_(r, start);
-      } catch (e) {
-        GEAPA_CORE.coreLogError(runId, 'Erro ao enviar prof', {
-          nome: r.name,
-          email: r.email,
-          err: String(e),
-          stack: e && e.stack
-        });
-      }
-    });
-
-    GEAPA_CORE.coreLogInfo(runId, 'checkProfsBirthdaysToday: resumo diário consolidado é enviado por checkBirthdaysToday', {
-      count: rows.length
-    });
-
-    GEAPA_CORE.coreLogInfo(runId, 'checkProfsBirthdaysToday: FIM OK', { count: rows.length });
+    const result = comms_processBirthdaysTodayBySource_('PROFESSORES');
+    GEAPA_CORE.coreLogInfo(runId, 'checkProfsBirthdaysToday: FIM OK', result);
+    return result;
   } finally {
     lock.releaseLock();
   }
@@ -116,37 +46,26 @@ function checkProfsBirthdaysToday() {
 
 function weeklyBirthdayDigest() {
   const runId = GEAPA_CORE.coreRunId();
-  GEAPA_CORE.coreLogInfo(runId, 'weeklyBirthdayDigest: INÍCIO');
+  GEAPA_CORE.coreLogInfo(runId, 'weeklyBirthdayDigest: INICIO');
 
   const today = aniv_startOfDay_(aniv_now_());
-
   if (today.getDay() !== 1) {
-    GEAPA_CORE.coreLogInfo(runId, 'weeklyBirthdayDigest: ignorado, hoje não é segunda-feira', {
+    GEAPA_CORE.coreLogInfo(runId, 'weeklyBirthdayDigest: ignorado, hoje nao e segunda-feira', {
       today: aniv_formatDate_(today)
     });
-    return;
+    return Object.freeze({ skipped: true, reason: 'NOT_MONDAY' });
   }
 
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(15000)) {
-    GEAPA_CORE.coreLogWarn(runId, 'Lock não obtido — evitando execução concorrente.');
+    GEAPA_CORE.coreLogWarn(runId, 'Lock nao obtido, evitando execucao concorrente.', {});
     return;
   }
 
   try {
-    const start = today;
-    const endExclusive = aniv_addDays_(start, ANIV_CFG.DAYS_AHEAD_WEEKLY + 1);
-
-    const memberRows = aniv_getMemberBirthdaysForWindow_(start, endExclusive);
-    const profRows = aniv_getProfBirthdaysForWindow_(start, endExclusive);
-
-    aniv_notifyCommunicationCombined_(memberRows, profRows, start, aniv_addDays_(start, ANIV_CFG.DAYS_AHEAD_WEEKLY), true);
-
-    GEAPA_CORE.coreLogInfo(runId, 'weeklyBirthdayDigest: FIM OK', {
-      memberCount: memberRows.length,
-      profCount: profRows.length,
-      totalCount: memberRows.length + profRows.length
-    });
+    const result = comms_processBirthdaysWeeklyBySource_('MEMBERS_ATUAIS');
+    GEAPA_CORE.coreLogInfo(runId, 'weeklyBirthdayDigest: FIM OK', result);
+    return result;
   } finally {
     lock.releaseLock();
   }
@@ -154,5 +73,27 @@ function weeklyBirthdayDigest() {
 
 function weeklyProfsBirthdayDigest() {
   const runId = GEAPA_CORE.coreRunId();
-  GEAPA_CORE.coreLogInfo(runId, 'weeklyProfsBirthdayDigest: ignorado, resumo semanal consolidado é enviado por weeklyBirthdayDigest', {});
+  GEAPA_CORE.coreLogInfo(runId, 'weeklyProfsBirthdayDigest: INICIO');
+
+  const today = aniv_startOfDay_(aniv_now_());
+  if (today.getDay() !== 1) {
+    GEAPA_CORE.coreLogInfo(runId, 'weeklyProfsBirthdayDigest: ignorado, hoje nao e segunda-feira', {
+      today: aniv_formatDate_(today)
+    });
+    return Object.freeze({ skipped: true, reason: 'NOT_MONDAY' });
+  }
+
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) {
+    GEAPA_CORE.coreLogWarn(runId, 'Lock nao obtido, evitando execucao concorrente.', {});
+    return;
+  }
+
+  try {
+    const result = comms_processBirthdaysWeeklyBySource_('PROFESSORES');
+    GEAPA_CORE.coreLogInfo(runId, 'weeklyProfsBirthdayDigest: FIM OK', result);
+    return result;
+  } finally {
+    lock.releaseLock();
+  }
 }

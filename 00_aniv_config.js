@@ -30,6 +30,11 @@ const ANIV_KEYS = Object.freeze({
   MEMBERS: 'MEMBERS_ATUAIS',           // Base de membros (nome, nascimento, e-mail, cargo, insta)
   PROFS: 'PROFS_BASE',                 // Base de professores (nome, e-mail, nascimento)
   DATES: 'DATAS_COMEMORATIVAS',        // Datas comemorativas do grupo
+  SEMESTERS: 'VIGENCIA_SEMESTRES',     // Datas oficiais do calendario academico
+  COMUNICACOES_LOG: 'COMUNICACOES_LOG',        // Log local principal do motor de comunicacoes
+  COMUNICACOES_CONFIG: 'COMUNICACOES_CONFIG',  // Configuracao principal do motor de comunicacoes
+  AVISOS_LOG: 'COMUNICACOES_LOG',              // Alias legado
+  AVISOS_CONFIG: 'COMUNICACOES_CONFIG',        // Alias legado
 });
 
 /**
@@ -190,6 +195,104 @@ const ANIV_CFG = Object.freeze({
     // Cargo que deve receber o resumo semanal
     COMM_ROLE_NAME: 'Coordenador(a) de Comunicação',
   }),
+
+  // ==========================================================
+  // 8) COMUNICACOES / MOTOR CONFIGURAVEL
+  // ==========================================================
+  AVISOS: Object.freeze({
+    MODULE_NAME: 'COMEMORACOES',
+    SEMESTERS_KEY: ANIV_KEYS.SEMESTERS,
+    LOG_KEY: ANIV_KEYS.AVISOS_LOG,
+    CONFIG_KEY: ANIV_KEYS.AVISOS_CONFIG,
+    OUTBOX_KEY: 'MAIL_SAIDA',
+    TEMPLATE_KEY: 'GEAPA_OPERACIONAL',
+    RECIPIENT_MODE: 'MEMBERS_ATUAIS',
+    FIXED_EMAIL: '',
+    FIXED_EMAILS: [],
+    EMAIL_GROUP_NAME: '',
+    SEND_AS_BCC: true,
+    PRIORITY: 'NORMAL',
+    SEMESTER_HEADERS: Object.freeze({
+      id: 'ID_Semestre',
+      start: 'Início',
+      end: 'Fim',
+      matriculaStart: 'Início Matrículas Online',
+      matriculaEnd: 'Fim Matrículas Online',
+      ajusteAlunoStart: 'Início Ajuste do Aluno',
+      ajusteAlunoEnd: 'Fim Ajuste do Aluno',
+      ajusteCoordenadorStart: 'Início Ajuste do Coordenador',
+      ajusteCoordenadorEnd: 'Fim ajuste do Coordenador'
+    }),
+    LOG_HEADERS: Object.freeze({
+      id: 'Id Comunicacao',
+      correlationKey: 'Chave de Correlacao',
+      flowType: 'Tipo Fluxo',
+      communicationCode: 'Codigo Comunicacao',
+      semesterId: 'ID_Semestre',
+      referenceDate: 'Data Referencia',
+      plannedAt: 'Data Disparo Prevista',
+      sentAt: 'Enviado Em',
+      status: 'Status',
+      moduleName: 'Modulo Dono',
+      subject: 'Assunto Final',
+      outboxId: 'Id Saida Central',
+      threadId: 'Id Thread Gmail',
+      messageId: 'Id Mensagem Gmail',
+      lastError: 'Ultimo Erro',
+      recipientCount: 'Quantidade Destinatarios',
+      resolvedRecipientMode: 'Modo Destinatario Resolvido',
+      templateUsed: 'Template Usado',
+      queuedAt: 'Data Enfileiramento',
+      processedAt: 'Data Processamento',
+      attempts: 'Tentativas Envio',
+      wasResend: 'Foi Reenvio',
+      tags: 'Tags',
+      payloadSummary: 'Payload Resumo',
+      observations: 'Observacoes',
+      createdAt: 'Criado Em',
+      updatedAt: 'Atualizado Em'
+    }),
+    CONFIG_HEADERS: Object.freeze({
+      active: 'Ativo',
+      flowType: 'Tipo Fluxo',
+      communicationCode: 'Codigo Comunicacao',
+      description: 'Descricao',
+      eventSource: 'Fonte Evento',
+      triggerMode: 'Modo Disparo',
+      originDateField: 'Campo Data Origem',
+      semesterId: 'ID_Semestre',
+      useCurrentSemester: 'Usar Semestre Vigente',
+      manualDate: 'Data Disparo Manual',
+      recipientMode: 'Modo Destinatario',
+      fixedEmail: 'Email Fixo',
+      fixedEmailList: 'Lista Emails Fixos',
+      institutionalGroup: 'Grupo Institucional',
+      sendAsBcc: 'Enviar Em Cco',
+      templateKey: 'Template Key',
+      subjectHuman: 'Assunto Humano',
+      title: 'Titulo Email',
+      preheader: 'Preheader',
+      introText: 'Intro Texto',
+      highlightBlock: 'Bloco Destaque',
+      buttonLabel: 'Rotulo Botao',
+      buttonLink: 'Link Botao',
+      daysBefore: 'Dias Antecedencia',
+      daysAfter: 'Dias Posterioridade',
+      priority: 'Prioridade',
+      manualEnabled: 'Ativa Manualmente',
+      allowManualResend: 'Permite Reenvio Manual',
+      duplicateWindowDays: 'Janela Duplicidade Dias',
+      recipientBatchLimit: 'Limite Destinatarios Por Lote',
+      replyTo: 'Responder Para',
+      useInstitutionalSignature: 'Usar Assinatura Institucional',
+      category: 'Categoria Comunicacao',
+      tags: 'Tags',
+      attachment1: 'Anexo 1',
+      attachment2: 'Anexo 2',
+      attachment3: 'Anexo 3',
+      observations: 'Observacoes'
+    })
+  })
 });
 
 /**
