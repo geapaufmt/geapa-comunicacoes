@@ -72,8 +72,10 @@ const ANIV_CFG = Object.freeze({
     COL_RGA: 'RGA',
     COL_BIRTHDATE: 'DATA DE NASCIMENTO',  // aceita DD/MM/AAAA ou DD/MM (depende do parser)
     COL_EMAIL: 'EMAIL',
+    COL_STATUS: 'Status',
     COL_ROLE: 'Cargo/função atual',
     COL_INSTA: '@ Instagram',             // opcional
+    ACTIVE_STATUS_VALUES: Object.freeze(['ATIVO', 'ATIVA', 'SIM']),
   }),
 
   // ==========================================================

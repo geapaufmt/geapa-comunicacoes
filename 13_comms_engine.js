@@ -245,19 +245,18 @@ function comms_listCurrentMemberEmails_() {
   var sheet = aniv_getSheetByKey_(ANIV_CFG.MEMBERS.KEY);
   var data = aniv_readSheet_(sheet);
   var emailIndex = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_EMAIL, true);
-  var roleIndex = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_ROLE, true);
+  var statusIndex = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_STATUS, true);
+  var activeStatuses = (ANIV_CFG.MEMBERS.ACTIVE_STATUS_VALUES || []).map(function(item) {
+    return comms_normalizeText_(item);
+  });
   var emails = [];
 
   if (emailIndex < 0) return [];
 
   for (var i = 0; i < data.rows.length; i++) {
     var email = String(data.rows[i][emailIndex] || '').trim();
-    var role = roleIndex >= 0 ? String(data.rows[i][roleIndex] || '').trim() : '';
-    var institutionalRole = role && GEAPA_CORE.coreFindInstitutionalRoleByAnyName
-      ? GEAPA_CORE.coreFindInstitutionalRoleByAnyName(role)
-      : null;
-
-    if (institutionalRole && institutionalRole.receivesEmails === false) {
+    var status = statusIndex >= 0 ? comms_normalizeText_(data.rows[i][statusIndex]) : '';
+    if (statusIndex >= 0 && activeStatuses.length && activeStatuses.indexOf(status) < 0) {
       continue;
     }
 
