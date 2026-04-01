@@ -59,7 +59,7 @@ function resendCommunicationByCodeNow(code) {
 
 function queueFirstManualCommunicationToday() {
   var rows = comms_getConfigRecords_();
-  var headers = ANIV_CFG.AVISOS.CONFIG_HEADERS;
+  var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
 
   for (var i = 0; i < rows.length; i++) {
     if (!comms_parseYesNo_(comms_getConfigValue_(rows[i], headers.active), false)) continue;
@@ -80,7 +80,7 @@ function queueFirstManualCommunicationToday() {
 
 function resendFirstManualCommunicationToday() {
   var rows = comms_getConfigRecords_();
-  var headers = ANIV_CFG.AVISOS.CONFIG_HEADERS;
+  var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
 
   for (var i = 0; i < rows.length; i++) {
     if (!comms_parseYesNo_(comms_getConfigValue_(rows[i], headers.active), false)) continue;
@@ -114,7 +114,7 @@ function queueMemberBirthdaysWeekly() {
 
 function queueMemberBirthdaysWeeklyForceToday() {
   Logger.log(JSON.stringify(comms_processConfigRows_(aniv_startOfDay_(aniv_now_()), function(configRow) {
-    var headers = ANIV_CFG.AVISOS.CONFIG_HEADERS;
+    var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
     return comms_normalizeText_(comms_getConfigValue_(configRow, headers.eventSource)) === 'MEMBERS_ATUAIS' &&
       comms_normalizeText_(comms_getConfigValue_(configRow, headers.triggerMode)) === 'RESUMO_SEMANAL';
   }), null, 2));
@@ -126,7 +126,7 @@ function queueProfessorBirthdaysWeekly() {
 
 function queueProfessorBirthdaysWeeklyForceToday() {
   Logger.log(JSON.stringify(comms_processConfigRows_(aniv_startOfDay_(aniv_now_()), function(configRow) {
-    var headers = ANIV_CFG.AVISOS.CONFIG_HEADERS;
+    var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
     return comms_normalizeText_(comms_getConfigValue_(configRow, headers.eventSource)) === 'PROFESSORES' &&
       comms_normalizeText_(comms_getConfigValue_(configRow, headers.triggerMode)) === 'RESUMO_SEMANAL';
   }), null, 2));

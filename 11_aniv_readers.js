@@ -75,44 +75,6 @@ function aniv_getProfBirthdaysForWindow_(startInclusive, endExclusive) {
   return out;
 }
 
-function aniv_getCommemorativesForWindow_(startInclusive, endExclusive) {
-  const sh = aniv_getSheetByKey_(ANIV_CFG.DATES.KEY);
-  const data = aniv_readSheet_(sh);
-
-  const iTitle = aniv_findHeaderIndex_(data.headers, ANIV_CFG.DATES.COL_TITLE);
-  const iDate = aniv_findHeaderIndex_(data.headers, ANIV_CFG.DATES.COL_DATE);
-  const iDesc = aniv_findHeaderIndex_(data.headers, ANIV_CFG.DATES.COL_DESC, true);
-  const iAudience = aniv_findHeaderIndex_(data.headers, ANIV_CFG.DATES.COL_AUDIENCE, true);
-
-  if (iTitle < 0 || iDate < 0) return [];
-
-  const startYear = new Date(startInclusive).getFullYear();
-  const out = [];
-
-  for (const row of data.rows) {
-    const title = String(row[iTitle] || '').trim();
-    const dateRaw = row[iDate];
-    if (!title || !dateRaw) continue;
-
-    const d = aniv_parseDateAny_(dateRaw);
-    if (!d) continue;
-
-    const normalized = aniv_normalizeToYear_(d, startYear);
-    if (aniv_inWindowMonthDay_(normalized, startInclusive, endExclusive)) {
-      out.push({
-        title,
-        date: d,
-        dateStr: aniv_formatBirth_(normalized),
-        desc: iDesc >= 0 ? String(row[iDesc] || '').trim() : '',
-        audience: iAudience >= 0 ? String(row[iAudience] || '').trim() : ''
-      });
-    }
-  }
-
-  out.sort((a, b) => aniv_monthDayKey_(a.date).localeCompare(aniv_monthDayKey_(b.date)));
-  return out;
-}
-
 function aniv_readSheet_(sheet) {
   const data = GEAPA_CORE.coreReadSheetData(sheet, {
     headerRow: 1,

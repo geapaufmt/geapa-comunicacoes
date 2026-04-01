@@ -29,12 +29,9 @@
 const ANIV_KEYS = Object.freeze({
   MEMBERS: 'MEMBERS_ATUAIS',           // Base de membros (nome, nascimento, e-mail, cargo, insta)
   PROFS: 'PROFS_BASE',                 // Base de professores (nome, e-mail, nascimento)
-  DATES: 'DATAS_COMEMORATIVAS',        // Datas comemorativas do grupo
   SEMESTERS: 'VIGENCIA_SEMESTRES',     // Datas oficiais do calendario academico
   COMUNICACOES_LOG: 'COMUNICACOES_LOG',        // Log local principal do motor de comunicacoes
   COMUNICACOES_CONFIG: 'COMUNICACOES_CONFIG',  // Configuracao principal do motor de comunicacoes
-  AVISOS_LOG: 'COMUNICACOES_LOG',              // Alias legado
-  AVISOS_CONFIG: 'COMUNICACOES_CONFIG',        // Alias legado
 });
 
 /**
@@ -92,20 +89,7 @@ const ANIV_CFG = Object.freeze({
   }),
 
   // ==========================================================
-  // 3) PLANILHA DE DATAS COMEMORATIVAS
-  // ==========================================================
-  DATES: Object.freeze({
-    KEY: ANIV_KEYS.DATES,
-
-    /** Cabeçalhos esperados */
-    COL_TITLE: 'Titulo',
-    COL_DATE: 'Data',
-    COL_DESC: 'Descricao',                // opcional
-    COL_AUDIENCE: 'Publico',              // 'Membros', 'Professores', 'Ambos'
-  }),
-
-  // ==========================================================
-  // 4) DESTINATÁRIOS AUTOMÁTICOS (COMUNICAÇÃO)
+  // 3) DESTINATÁRIOS AUTOMÁTICOS (COMUNICAÇÃO)
   // ==========================================================
   COMM: Object.freeze({
     /**
@@ -135,7 +119,7 @@ const ANIV_CFG = Object.freeze({
   }),
 
   // ==========================================================
-  // 5) E-MAIL / ASSUNTOS
+  // 4) E-MAIL / ASSUNTOS
   // ==========================================================
   EMAIL: Object.freeze({
     /** E-mail fixo opcional (se quiser CC/BCC institucional). Deixe vazio se não usar. */
@@ -154,7 +138,7 @@ const ANIV_CFG = Object.freeze({
   }),
 
   // ==========================================================
-  // 6) VISUAL / IDENTIDADE
+  // 5) VISUAL / IDENTIDADE
   // ==========================================================
   BRAND: Object.freeze({
     /**
@@ -172,7 +156,7 @@ const ANIV_CFG = Object.freeze({
   }),
 
   // ==========================================================
-// 7) VIGÊNCIAS / DESTINATÁRIO DA COMUNICAÇÃO
+// 6) VIGÊNCIAS / DESTINATÁRIO DA COMUNICAÇÃO
 // ==========================================================
   VIGENCIA: Object.freeze({
     DIRETORIAS_KEY: 'VIGENCIA_DIRETORIAS',
@@ -197,13 +181,13 @@ const ANIV_CFG = Object.freeze({
   }),
 
   // ==========================================================
-  // 8) COMUNICACOES / MOTOR CONFIGURAVEL
+  // 7) COMUNICACOES / MOTOR CONFIGURAVEL
   // ==========================================================
-  AVISOS: Object.freeze({
+  COMUNICACOES: Object.freeze({
     MODULE_NAME: 'COMEMORACOES',
     SEMESTERS_KEY: ANIV_KEYS.SEMESTERS,
-    LOG_KEY: ANIV_KEYS.AVISOS_LOG,
-    CONFIG_KEY: ANIV_KEYS.AVISOS_CONFIG,
+    LOG_KEY: ANIV_KEYS.COMUNICACOES_LOG,
+    CONFIG_KEY: ANIV_KEYS.COMUNICACOES_CONFIG,
     OUTBOX_KEY: 'MAIL_SAIDA',
     TEMPLATE_KEY: 'GEAPA_OPERACIONAL',
     RECIPIENT_MODE: 'MEMBERS_ATUAIS',

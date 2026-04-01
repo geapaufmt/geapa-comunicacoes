@@ -9,32 +9,28 @@
  * - Comunicacoes_Config
  * - Comunicacoes_Log
  *
- * Legado:
- * - Avisos_Config
- * - Avisos_Log
- *
  * O objetivo aqui e manter o modulo dono do conteudo e da deteccao
  * dos eventos, enquanto o geapa-core continua dono do layout,
  * assunto final, slogan e envio tecnico.
  */
 
 function comms_getConfigSheet_() {
-  return aniv_getSheetByKey_(ANIV_CFG.AVISOS.CONFIG_KEY);
+  return aniv_getSheetByKey_(ANIV_CFG.COMUNICACOES.CONFIG_KEY);
 }
 
 function comms_getLogSheet_() {
-  return aniv_getSheetByKey_(ANIV_CFG.AVISOS.LOG_KEY);
+  return aniv_getSheetByKey_(ANIV_CFG.COMUNICACOES.LOG_KEY);
 }
 
 function comms_getConfigRecords_() {
-  return GEAPA_CORE.coreReadRecordsByKey(ANIV_CFG.AVISOS.CONFIG_KEY, {
+  return GEAPA_CORE.coreReadRecordsByKey(ANIV_CFG.COMUNICACOES.CONFIG_KEY, {
     headerRow: 1,
     startRow: 2
   });
 }
 
 function comms_getLogRecords_() {
-  return GEAPA_CORE.coreReadRecordsByKey(ANIV_CFG.AVISOS.LOG_KEY, {
+  return GEAPA_CORE.coreReadRecordsByKey(ANIV_CFG.COMUNICACOES.LOG_KEY, {
     headerRow: 1,
     startRow: 2
   });
@@ -167,7 +163,7 @@ function comms_getConfigValue_(record, headerName) {
 
 function comms_findConfigByCode_(code) {
   var target = comms_normalizeText_(code);
-  var headers = ANIV_CFG.AVISOS.CONFIG_HEADERS;
+  var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
   var rows = comms_getConfigRecords_();
 
   for (var i = 0; i < rows.length; i++) {
@@ -183,7 +179,7 @@ function comms_findConfigByCode_(code) {
 function comms_findLogByCorrelationKey_(correlationKey) {
   var target = comms_normalizeText_(correlationKey);
   var rows = comms_getLogRecords_();
-  var headers = ANIV_CFG.AVISOS.LOG_HEADERS;
+  var headers = ANIV_CFG.COMUNICACOES.LOG_HEADERS;
 
   for (var i = 0; i < rows.length; i++) {
     if (comms_normalizeText_(comms_getConfigValue_(rows[i], headers.correlationKey)) === target) {
@@ -217,13 +213,13 @@ function comms_getCurrentSemesterId_(today) {
 
 function comms_findSemesterRecordById_(semesterId) {
   var target = comms_normalizeText_(semesterId);
-  var rows = GEAPA_CORE.coreReadRecordsByKey(ANIV_CFG.AVISOS.SEMESTERS_KEY, {
+  var rows = GEAPA_CORE.coreReadRecordsByKey(ANIV_CFG.COMUNICACOES.SEMESTERS_KEY, {
     headerRow: 1,
     startRow: 2
   });
 
   for (var i = 0; i < rows.length; i++) {
-    if (comms_normalizeText_(comms_getConfigValue_(rows[i], ANIV_CFG.AVISOS.SEMESTER_HEADERS.id)) === target) {
+    if (comms_normalizeText_(comms_getConfigValue_(rows[i], ANIV_CFG.COMUNICACOES.SEMESTER_HEADERS.id)) === target) {
       return rows[i];
     }
   }
@@ -272,11 +268,11 @@ function comms_listCurrentMemberEmails_() {
 }
 
 function comms_resolveRecipientBundle_(configRecord, eventItems) {
-  var headers = ANIV_CFG.AVISOS.CONFIG_HEADERS;
+  var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
   var mode = String(
-    comms_getConfigValue_(configRecord, headers.recipientMode) || ANIV_CFG.AVISOS.RECIPIENT_MODE
+    comms_getConfigValue_(configRecord, headers.recipientMode) || ANIV_CFG.COMUNICACOES.RECIPIENT_MODE
   ).trim().toUpperCase();
-  var sendAsBcc = comms_parseYesNo_(comms_getConfigValue_(configRecord, headers.sendAsBcc), ANIV_CFG.AVISOS.SEND_AS_BCC === true);
+  var sendAsBcc = comms_parseYesNo_(comms_getConfigValue_(configRecord, headers.sendAsBcc), ANIV_CFG.COMUNICACOES.SEND_AS_BCC === true);
   var recipients = [];
 
   if (mode === 'FIXO') {
@@ -363,7 +359,7 @@ function comms_buildBirthdayCodeToken_(code, aggregate) {
 }
 
 function comms_buildCorrelationKey_(configRecord, eventBundle) {
-  var headers = ANIV_CFG.AVISOS.CONFIG_HEADERS;
+  var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
   var flowType = comms_normalizeText_(comms_getConfigValue_(configRecord, headers.flowType));
   var source = comms_normalizeText_(comms_getConfigValue_(configRecord, headers.eventSource));
   var code = String(comms_getConfigValue_(configRecord, headers.communicationCode) || '').trim();
@@ -401,7 +397,7 @@ function comms_buildCorrelationKey_(configRecord, eventBundle) {
 }
 
 function comms_buildPayload_(configRecord, eventBundle) {
-  var headers = ANIV_CFG.AVISOS.CONFIG_HEADERS;
+  var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
   var flowType = comms_normalizeText_(comms_getConfigValue_(configRecord, headers.flowType));
   var title = String(comms_getConfigValue_(configRecord, headers.title) || '').trim();
   var preheader = String(comms_getConfigValue_(configRecord, headers.preheader) || '').trim();
@@ -476,10 +472,10 @@ function comms_buildPayload_(configRecord, eventBundle) {
 }
 
 function comms_buildContract_(configRecord, eventBundle) {
-  var headers = ANIV_CFG.AVISOS.CONFIG_HEADERS;
+  var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
   var subjectHuman = String(comms_getConfigValue_(configRecord, headers.subjectHuman) || '').trim() || String(comms_getConfigValue_(configRecord, headers.description) || '').trim() || 'Comunicação GEAPA';
-  var templateKey = String(comms_getConfigValue_(configRecord, headers.templateKey) || '').trim() || ANIV_CFG.AVISOS.TEMPLATE_KEY;
-  var priority = String(comms_getConfigValue_(configRecord, headers.priority) || '').trim() || ANIV_CFG.AVISOS.PRIORITY;
+  var templateKey = String(comms_getConfigValue_(configRecord, headers.templateKey) || '').trim() || ANIV_CFG.COMUNICACOES.TEMPLATE_KEY;
+  var priority = String(comms_getConfigValue_(configRecord, headers.priority) || '').trim() || ANIV_CFG.COMUNICACOES.PRIORITY;
   var recipients = comms_resolveRecipientBundle_(configRecord, eventBundle.items);
   var recipientLimit = comms_parseInteger_(comms_getConfigValue_(configRecord, headers.recipientBatchLimit), 0);
   var tags = comms_parseTags_(comms_getConfigValue_(configRecord, headers.tags));
@@ -502,7 +498,7 @@ function comms_buildContract_(configRecord, eventBundle) {
   }
 
   return {
-    moduleName: ANIV_CFG.AVISOS.MODULE_NAME,
+    moduleName: ANIV_CFG.COMUNICACOES.MODULE_NAME,
     templateKey: templateKey,
     correlationKey: comms_buildCorrelationKey_(configRecord, eventBundle),
     entityType: eventBundle.entityType || 'COMUNICACAO',
@@ -540,7 +536,7 @@ function comms_buildContract_(configRecord, eventBundle) {
 
 function comms_findLogByCorrelationKeyInRows_(rows, correlationKey) {
   var target = comms_normalizeText_(correlationKey);
-  var headers = ANIV_CFG.AVISOS.LOG_HEADERS;
+  var headers = ANIV_CFG.COMUNICACOES.LOG_HEADERS;
 
   for (var i = 0; i < (rows || []).length; i++) {
     if (comms_normalizeText_(comms_getConfigValue_(rows[i], headers.correlationKey)) === target) {
@@ -552,7 +548,7 @@ function comms_findLogByCorrelationKeyInRows_(rows, correlationKey) {
 }
 
 function comms_buildPayloadSummary_(configRecord, contract, bundle) {
-  var headers = ANIV_CFG.AVISOS.CONFIG_HEADERS;
+  var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
   return {
     communicationCode: String(comms_getConfigValue_(configRecord, headers.communicationCode) || '').trim(),
     category: String(contract.metadata.category || '').trim(),
@@ -570,11 +566,11 @@ function comms_buildPayloadSummary_(configRecord, contract, bundle) {
 }
 
 function comms_getPayloadSummaryFromLog_(row) {
-  return comms_parseJson_(comms_getConfigValue_(row, ANIV_CFG.AVISOS.LOG_HEADERS.payloadSummary), {});
+  return comms_parseJson_(comms_getConfigValue_(row, ANIV_CFG.COMUNICACOES.LOG_HEADERS.payloadSummary), {});
 }
 
 function comms_findDuplicateWithinWindow_(rows, configRecord, contract, bundle) {
-  var headers = ANIV_CFG.AVISOS.LOG_HEADERS;
+  var headers = ANIV_CFG.COMUNICACOES.LOG_HEADERS;
   var windowDays = Number(contract.metadata.duplicateWindowDays || 0);
   var communicationCode = comms_normalizeText_(contract.metadata.communicationCode);
   var entityType = comms_normalizeText_(contract.entityType);
@@ -621,7 +617,7 @@ function comms_writeQueueLog_(rows, existingLog, configRecord, contract, bundle,
   var payloadSummary = comms_buildPayloadSummary_(configRecord, contract, bundle);
   var logPayload = {
     'Status': queueResult.status,
-    'Modulo Dono': ANIV_CFG.AVISOS.MODULE_NAME,
+    'Modulo Dono': ANIV_CFG.COMUNICACOES.MODULE_NAME,
     'Assunto Final': queueResult.subject,
     'Id Saida Central': queueResult.saidaId || '',
     'Id Thread Gmail': '',
@@ -682,7 +678,7 @@ function comms_buildBirthdayBundles_(configRecord, source, triggerMode, today) {
       });
   if (!items.length) return [];
 
-  var recipientMode = comms_normalizeText_(comms_getConfigValue_(configRecord, ANIV_CFG.AVISOS.CONFIG_HEADERS.recipientMode));
+  var recipientMode = comms_normalizeText_(comms_getConfigValue_(configRecord, ANIV_CFG.COMUNICACOES.CONFIG_HEADERS.recipientMode));
   var aggregate = recipientMode !== 'EVENT_SOURCE_EMAIL';
   var bundles = [];
 
@@ -720,7 +716,7 @@ function comms_buildBirthdayBundles_(configRecord, source, triggerMode, today) {
 }
 
 function comms_buildSemesterBundles_(configRecord, today, opts) {
-  var headers = ANIV_CFG.AVISOS.CONFIG_HEADERS;
+  var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
   opts = opts || {};
   var semesterId = comms_parseYesNo_(comms_getConfigValue_(configRecord, headers.useCurrentSemester), false)
     ? comms_getCurrentSemesterId_(today)
@@ -759,7 +755,7 @@ function comms_buildSemesterBundles_(configRecord, today, opts) {
 }
 
 function comms_buildConfigBundles_(configRecord, today, opts) {
-  var headers = ANIV_CFG.AVISOS.CONFIG_HEADERS;
+  var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
   opts = opts || {};
   var triggerMode = comms_normalizeText_(comms_getConfigValue_(configRecord, headers.triggerMode));
   if (triggerMode === 'MANUAL' && opts.forceManual !== true) return [];
@@ -789,7 +785,7 @@ function comms_buildConfigBundles_(configRecord, today, opts) {
 }
 
 function comms_collectBundlesForConfig_(configRecord, today, opts) {
-  var headers = ANIV_CFG.AVISOS.CONFIG_HEADERS;
+  var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
   var source = comms_normalizeText_(comms_getConfigValue_(configRecord, headers.eventSource));
   var triggerMode = comms_normalizeText_(comms_getConfigValue_(configRecord, headers.triggerMode));
 
@@ -808,7 +804,7 @@ function comms_collectBundlesForConfig_(configRecord, today, opts) {
 function comms_processConfigRows_(today, filterFn, opts) {
   var rows = comms_getConfigRecords_();
   var logs = comms_getLogRecords_();
-  var headers = ANIV_CFG.AVISOS.CONFIG_HEADERS;
+  var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
   var runId = GEAPA_CORE.coreRunId();
   var counters = comms_createCounters_();
   opts = opts || {};
@@ -834,7 +830,7 @@ function comms_processConfigRows_(today, filterFn, opts) {
         }
         var correlationKey = contract.correlationKey;
         existingLog = comms_findLogByCorrelationKeyInRows_(logs, correlationKey);
-        var existingStatus = existingLog ? comms_normalizeText_(existingLog[ANIV_CFG.AVISOS.LOG_HEADERS.status]) : '';
+        var existingStatus = existingLog ? comms_normalizeText_(existingLog[ANIV_CFG.COMUNICACOES.LOG_HEADERS.status]) : '';
         if ((existingStatus === 'PENDENTE' || existingStatus === 'ENVIADO') && opts.forceQueueDuplicate !== true) {
           counters.duplicates++;
           continue;
@@ -921,7 +917,7 @@ function comms_syncLogWithOutbox_() {
   });
 
   logs.forEach(function(row) {
-    var key = comms_normalizeText_(comms_getConfigValue_(row, ANIV_CFG.AVISOS.LOG_HEADERS.correlationKey));
+    var key = comms_normalizeText_(comms_getConfigValue_(row, ANIV_CFG.COMUNICACOES.LOG_HEADERS.correlationKey));
     var outboxRow = byCorrelationKey[key];
     if (!outboxRow) return;
 
@@ -939,7 +935,7 @@ function comms_syncLogWithOutbox_() {
       'Ultimo Erro': String(outboxRow['Ultimo Erro'] || '').trim(),
       'Data Processamento': outboxRow['Enviado Em'] || '',
       'Tentativas Envio': attempts,
-      'Template Usado': String(observations.templateKey || outboxMetadata.templateKey || comms_getConfigValue_(row, ANIV_CFG.AVISOS.LOG_HEADERS.templateUsed) || '').trim(),
+      'Template Usado': String(observations.templateKey || outboxMetadata.templateKey || comms_getConfigValue_(row, ANIV_CFG.COMUNICACOES.LOG_HEADERS.templateUsed) || '').trim(),
       'Atualizado Em': new Date()
     });
     updated++;
@@ -956,7 +952,7 @@ function comms_queueCommunicationByCode_(code, opts) {
     throw new Error('Comunicacao nao encontrada ou inativa: ' + code);
   }
 
-  var headers = ANIV_CFG.AVISOS.CONFIG_HEADERS;
+  var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
   var manualEnabled = comms_parseYesNo_(comms_getConfigValue_(configRow, headers.manualEnabled), false);
   if (manualEnabled !== true && opts.force !== true) {
     throw new Error('Comunicacao nao habilitada para disparo manual: ' + code);
@@ -984,7 +980,7 @@ function comms_queueCommunicationByCode_(code, opts) {
 function comms_processBirthdaysTodayBySource_(source) {
   var today = aniv_startOfDay_(aniv_now_());
   return comms_processConfigRows_(today, function(configRow) {
-    var headers = ANIV_CFG.AVISOS.CONFIG_HEADERS;
+    var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
     return comms_normalizeText_(comms_getConfigValue_(configRow, headers.eventSource)) === comms_normalizeText_(source) &&
       comms_normalizeText_(comms_getConfigValue_(configRow, headers.triggerMode)) === 'DATA_ORIGEM';
   });
@@ -996,7 +992,7 @@ function comms_processBirthdaysWeeklyBySource_(source) {
     return Object.freeze({ skipped: true, reason: 'NOT_MONDAY' });
   }
   return comms_processConfigRows_(today, function(configRow) {
-    var headers = ANIV_CFG.AVISOS.CONFIG_HEADERS;
+    var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
     return comms_normalizeText_(comms_getConfigValue_(configRow, headers.eventSource)) === comms_normalizeText_(source) &&
       comms_normalizeText_(comms_getConfigValue_(configRow, headers.triggerMode)) === 'RESUMO_SEMANAL';
   });
@@ -1005,7 +1001,7 @@ function comms_processBirthdaysWeeklyBySource_(source) {
 function comms_processConfiguredDaily_() {
   var today = aniv_startOfDay_(aniv_now_());
   return comms_processConfigRows_(today, function(configRow) {
-    var headers = ANIV_CFG.AVISOS.CONFIG_HEADERS;
+    var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
     var source = comms_normalizeText_(comms_getConfigValue_(configRow, headers.eventSource));
     var triggerMode = comms_normalizeText_(comms_getConfigValue_(configRow, headers.triggerMode));
     return (source === 'VIGENCIA_SEMESTRES' && triggerMode === 'DATA_ORIGEM') ||
