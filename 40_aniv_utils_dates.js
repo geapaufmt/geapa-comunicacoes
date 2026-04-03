@@ -46,6 +46,22 @@ function aniv_normalizeToYear_(date, year) {
   return new Date(Number(year), d.getMonth(), d.getDate());
 }
 
+function aniv_normalizeToYearWithFeb28Fallback_(date, year) {
+  const d = new Date(date);
+  const targetYear = Number(year);
+  const month = d.getMonth();
+  const day = d.getDate();
+
+  if (month === 1 && day === 29) {
+    const leapProbe = new Date(targetYear, 1, 29);
+    if (leapProbe.getMonth() !== 1) {
+      return new Date(targetYear, 1, 28);
+    }
+  }
+
+  return new Date(targetYear, month, day);
+}
+
 function aniv_monthDayKey_(date) {
   const d = new Date(date);
   const mm = String(d.getMonth() + 1).padStart(2, '0');

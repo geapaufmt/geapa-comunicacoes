@@ -37,6 +37,50 @@ function debugCommunicationsConfigs() {
   Logger.log(JSON.stringify(comms_getConfigRecords_(), null, 2));
 }
 
+function applyCommunicationsUxNow() {
+  Logger.log(JSON.stringify(applyCommunicationsSheetUx(), null, 2));
+}
+
+function reapplyCommunicationsHeaderNotesNow() {
+  Logger.log(JSON.stringify(reapplyCommunicationsHeaderNotes(), null, 2));
+}
+
+function applyCommunicationsDataValidationNow() {
+  Logger.log(JSON.stringify(applyCommunicationsDataValidation(), null, 2));
+}
+
+function validateCommunicationsConfigNow() {
+  Logger.log(JSON.stringify(validateCommunicationsConfig(), null, 2));
+}
+
+function listCommunicationsTriggersNow() {
+  Logger.log(JSON.stringify(listCommunicationsTriggers(), null, 2));
+}
+
+function validateCommunicationsTriggersNow() {
+  Logger.log(JSON.stringify(validateCommunicationsTriggers(), null, 2));
+}
+
+function reinstallCommunicationsTriggersNow() {
+  Logger.log(JSON.stringify(reinstallCommunicationsTriggers(), null, 2));
+}
+
+function checkCommunicationsHealthNow() {
+  Logger.log(JSON.stringify(checkCommunicationsHealth(), null, 2));
+}
+
+function writeCommunicationsValidationReportNow() {
+  Logger.log(JSON.stringify(writeCommunicationsValidationReport(), null, 2));
+}
+
+function previewCommunicationByCodeNow(code) {
+  Logger.log(JSON.stringify(previewCommunicationByCode(code, { force: true }), null, 2));
+}
+
+function previewFirstManualCommunicationNow() {
+  Logger.log(JSON.stringify(previewFirstManualCommunication(), null, 2));
+}
+
 function queueAcademicNoticesToday() {
   Logger.log(JSON.stringify(processAcademicNoticesToday(), null, 2));
 }
@@ -129,6 +173,14 @@ function queueProfessorBirthdaysWeeklyForceToday() {
     var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
     return comms_normalizeText_(comms_getConfigValue_(configRow, headers.eventSource)) === 'PROFESSORES' &&
       comms_normalizeText_(comms_getConfigValue_(configRow, headers.triggerMode)) === 'RESUMO_SEMANAL';
+  }), null, 2));
+}
+
+function queueMemberIntegrationAnniversariesToday() {
+  Logger.log(JSON.stringify(comms_processConfigRows_(aniv_startOfDay_(aniv_now_()), function(configRow) {
+    var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
+    return comms_normalizeText_(comms_getConfigValue_(configRow, headers.eventSource)) === 'MEMBERS_ATUAIS' &&
+      comms_normalizeText_(comms_getConfigValue_(configRow, headers.triggerMode)) === 'ANIVERSARIO_INTEGRACAO_ANUAL';
   }), null, 2));
 }
 

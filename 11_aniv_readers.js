@@ -75,6 +75,56 @@ function aniv_getProfBirthdaysForWindow_(startInclusive, endExclusive) {
   return out;
 }
 
+function aniv_getMemberIntegrationAnniversariesForWindow_(startInclusive, endExclusive) {
+  const sh = aniv_getSheetByKey_(ANIV_CFG.MEMBERS.KEY);
+  const data = aniv_readSheet_(sh);
+
+  const iName = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_NAME);
+  const iIntegration = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_INTEGRATION_DATE);
+  const iEmail = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_EMAIL, true);
+  const iStatus = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_STATUS, true);
+  const iRole = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_ROLE, true);
+  const iInsta = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_INSTA, true);
+
+  if (iName < 0 || iIntegration < 0) return [];
+
+  const startYear = new Date(startInclusive).getFullYear();
+  const activeStatuses = (ANIV_CFG.MEMBERS.ACTIVE_STATUS_VALUES || []).map(function(item) {
+    return aniv_normHeader_(item);
+  });
+  const out = [];
+
+  for (const row of data.rows) {
+    const name = String(row[iName] || '').trim();
+    const integrationRaw = row[iIntegration];
+    const email = iEmail >= 0 ? String(row[iEmail] || '').trim() : '';
+    const status = iStatus >= 0 ? aniv_normHeader_(row[iStatus]) : '';
+    if (!name || !integrationRaw) continue;
+    if (iStatus >= 0 && activeStatuses.length && activeStatuses.indexOf(status) < 0) continue;
+
+    const integrationDate = aniv_parseDateAny_(integrationRaw);
+    if (!integrationDate) continue;
+
+    const normalizedAnniversary = aniv_normalizeToYearWithFeb28Fallback_(integrationDate, startYear);
+    const yearsCompleted = startYear - integrationDate.getFullYear();
+    if (yearsCompleted < 1) continue;
+    if (!aniv_inWindowMonthDay_(normalizedAnniversary, startInclusive, endExclusive)) continue;
+
+    out.push({
+      name,
+      email,
+      role: iRole >= 0 ? String(row[iRole] || '').trim() : '',
+      insta: iInsta >= 0 ? String(row[iInsta] || '').trim() : '',
+      integrationDate,
+      anniversaryDate: normalizedAnniversary,
+      yearsCompleted
+    });
+  }
+
+  out.sort((a, b) => a.anniversaryDate.getTime() - b.anniversaryDate.getTime());
+  return out;
+}
+
 function aniv_readSheet_(sheet) {
   const data = GEAPA_CORE.coreReadSheetData(sheet, {
     headerRow: 1,
@@ -88,9 +138,12 @@ function aniv_readSheet_(sheet) {
 }
 
 function aniv_findHeaderIndex_(headers, name, optional) {
-  const target = aniv_normHeader_(name);
-  for (let i = 0; i < headers.length; i++) {
-    if (aniv_normHeader_(headers[i]) === target) return i;
+  const targets = Array.isArray(name) ? name : [name];
+  for (let t = 0; t < targets.length; t++) {
+    const target = aniv_normHeader_(targets[t]);
+    for (let i = 0; i < headers.length; i++) {
+      if (aniv_normHeader_(headers[i]) === target) return i;
+    }
   }
   return optional ? -1 : -1;
 }

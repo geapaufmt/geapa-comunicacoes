@@ -241,6 +241,23 @@ function comms_buildWindow_(today, triggerMode) {
   };
 }
 
+function comms_normalizeEventSource_(value) {
+  var normalized = comms_normalizeText_(value);
+  return normalized === 'DADOS-OFICIAIS_GEAPA' ? 'DADOS_OFICIAIS_GEAPA' : normalized;
+}
+
+function comms_getOfficialGroupRecord_() {
+  try {
+    var rows = GEAPA_CORE.coreReadRecordsByKey(ANIV_CFG.OFFICIAL_DATA.KEY, {
+      headerRow: 1,
+      startRow: 2
+    });
+    return rows && rows.length ? rows[0] : null;
+  } catch (err) {
+    return null;
+  }
+}
+
 function comms_listCurrentMemberEmails_() {
   var sheet = aniv_getSheetByKey_(ANIV_CFG.MEMBERS.KEY);
   var data = aniv_readSheet_(sheet);
@@ -266,6 +283,22 @@ function comms_listCurrentMemberEmails_() {
   return GEAPA_CORE.coreUniqueEmails(emails);
 }
 
+function comms_listCurrentProfessorEmails_() {
+  var sheet = aniv_getSheetByKey_(ANIV_CFG.PROFS.KEY);
+  var data = aniv_readSheet_(sheet);
+  var emailIndex = aniv_findHeaderIndex_(data.headers, ANIV_CFG.PROFS.COL_EMAIL, true);
+  var emails = [];
+
+  if (emailIndex < 0) return [];
+
+  for (var i = 0; i < data.rows.length; i++) {
+    var email = String(data.rows[i][emailIndex] || '').trim();
+    if (email) emails.push(email);
+  }
+
+  return GEAPA_CORE.coreUniqueEmails(emails);
+}
+
 function comms_resolveRecipientBundle_(configRecord, eventItems) {
   var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
   var mode = String(
@@ -278,6 +311,10 @@ function comms_resolveRecipientBundle_(configRecord, eventItems) {
     recipients = comms_parseEmailList_(comms_getConfigValue_(configRecord, headers.fixedEmail));
   } else if (mode === 'LISTA_FIXA') {
     recipients = comms_parseEmailList_(comms_getConfigValue_(configRecord, headers.fixedEmailList));
+  } else if (mode === 'MEMBERS_E_PROFESSORES') {
+    recipients = GEAPA_CORE.coreUniqueEmails(
+      comms_listCurrentMemberEmails_().concat(comms_listCurrentProfessorEmails_())
+    );
   } else if (mode === 'EMAIL_GROUP') {
     recipients = GEAPA_CORE.coreGetCurrentEmailsByEmailGroup(comms_getConfigValue_(configRecord, headers.institutionalGroup) || '');
   } else if (mode === 'EVENT_SOURCE_EMAIL') {
@@ -357,10 +394,57 @@ function comms_buildBirthdayCodeToken_(code, aggregate) {
   return aggregate ? 'G' : 'P';
 }
 
+function comms_buildIntegrationCodeToken_(code) {
+  var normalizedCode = comms_normalizeText_(code);
+  var map = {
+    ANIV_GRUPO_DIA_PESSOA: 'P',
+    ANIV_GRUPO_DIA_COORD: 'C'
+  };
+
+  return map[normalizedCode] || 'P';
+}
+
+function comms_formatYearsCompletedLabel_(yearsCompleted) {
+  var years = Number(yearsCompleted || 0);
+  return years === 1 ? '1 ano' : (String(years) + ' anos');
+}
+
+function comms_buildTemplateVariables_(eventBundle) {
+  var firstItem = eventBundle && eventBundle.items && eventBundle.items.length ? eventBundle.items[0] : {};
+  var yearsCompleted = Number(firstItem.yearsCompleted || 0);
+  var integrationDate = firstItem.integrationDate || '';
+  var officialRecord = comms_getOfficialGroupRecord_() || {};
+  var semesterId = eventBundle && eventBundle.semesterId ? String(eventBundle.semesterId).trim() : '';
+
+  return {
+    nome: String(firstItem.name || '').trim(),
+    nome_membro: String(firstItem.name || '').trim(),
+    anos_completos: yearsCompleted > 0 ? String(yearsCompleted) : '',
+    anos_no_grupo: yearsCompleted > 0 ? String(yearsCompleted) : '',
+    anos_no_grupo_label: yearsCompleted > 0 ? comms_formatYearsCompletedLabel_(yearsCompleted) : '',
+    data_integracao: integrationDate ? aniv_formatDate_(integrationDate) : '',
+    data_referencia: eventBundle && eventBundle.referenceDate ? aniv_formatDate_(eventBundle.referenceDate) : '',
+    data_disparo: eventBundle && eventBundle.plannedDate ? aniv_formatDate_(eventBundle.plannedDate) : '',
+    semestre: semesterId,
+    nome_grupo: String(comms_getConfigValue_(officialRecord, ANIV_CFG.OFFICIAL_DATA.COL_ORG_NAME) || '').trim(),
+    sigla_grupo: String(comms_getConfigValue_(officialRecord, ANIV_CFG.OFFICIAL_DATA.COL_SHORT_NAME) || '').trim(),
+    email_oficial: String(comms_getConfigValue_(officialRecord, ANIV_CFG.OFFICIAL_DATA.COL_EMAIL) || '').trim(),
+    codigo_comunicacao: eventBundle && eventBundle.communicationCode ? String(eventBundle.communicationCode).trim() : '',
+    tipo_fluxo: eventBundle && eventBundle.flowType ? String(eventBundle.flowType).trim() : '',
+    fonte_evento: eventBundle && eventBundle.eventSource ? String(eventBundle.eventSource).trim() : ''
+  };
+}
+
+function comms_interpolateText_(value, vars) {
+  return String(value || '').replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, function(match, key) {
+    return Object.prototype.hasOwnProperty.call(vars || {}, key) ? String(vars[key] || '') : '';
+  }).trim();
+}
+
 function comms_buildCorrelationKey_(configRecord, eventBundle) {
   var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
   var flowType = comms_normalizeText_(comms_getConfigValue_(configRecord, headers.flowType));
-  var source = comms_normalizeText_(comms_getConfigValue_(configRecord, headers.eventSource));
+  var source = comms_normalizeEventSource_(comms_getConfigValue_(configRecord, headers.eventSource));
   var code = String(comms_getConfigValue_(configRecord, headers.communicationCode) || '').trim();
   var dateToken = Utilities.formatDate(eventBundle.plannedDate, ANIV_CFG.TZ, 'yyyyMMdd');
 
@@ -369,6 +453,16 @@ function comms_buildCorrelationKey_(configRecord, eventBundle) {
   }
 
   if (source === 'MEMBERS_ATUAIS') {
+    if (eventBundle.milestoneType === 'ANIVERSARIO_INTEGRACAO_ANUAL' && eventBundle.aggregate === false && eventBundle.items.length === 1) {
+      return ('COM-MEM-ING-' +
+        comms_buildIntegrationCodeToken_(code) +
+        '-' +
+        dateToken +
+        '-' +
+        String(eventBundle.items[0].yearsCompleted || 0) + 'A' +
+        '-' +
+        comms_buildPersonCorrelationToken_(eventBundle.items[0])).toUpperCase();
+    }
     if (eventBundle.aggregate === false && eventBundle.items.length === 1) {
       return ('COM-MEM-' +
         comms_buildBirthdayCodeToken_(code, false) +
@@ -392,19 +486,28 @@ function comms_buildCorrelationKey_(configRecord, eventBundle) {
     return ('COM-PROF-' + comms_buildBirthdayCodeToken_(code, true) + '-' + dateToken).toUpperCase();
   }
 
+  if (source === 'DADOS_OFICIAIS_GEAPA') {
+    return ('COM-GRP-' + comms_slug_(code) + '-' + dateToken).toUpperCase();
+  }
+
   return ('COM-CFG-' + comms_slug_(code) + '-' + dateToken).toUpperCase();
 }
 
 function comms_buildPayload_(configRecord, eventBundle) {
   var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
+  var vars = comms_buildTemplateVariables_(Object.assign({}, eventBundle, {
+    communicationCode: String(comms_getConfigValue_(configRecord, headers.communicationCode) || '').trim(),
+    flowType: String(comms_getConfigValue_(configRecord, headers.flowType) || '').trim(),
+    eventSource: String(comms_getConfigValue_(configRecord, headers.eventSource) || '').trim()
+  }));
   var flowType = comms_normalizeText_(comms_getConfigValue_(configRecord, headers.flowType));
-  var title = String(comms_getConfigValue_(configRecord, headers.title) || '').trim();
-  var preheader = String(comms_getConfigValue_(configRecord, headers.preheader) || '').trim();
-  var introText = String(comms_getConfigValue_(configRecord, headers.introText) || '').trim();
-  var highlightBlock = String(comms_getConfigValue_(configRecord, headers.highlightBlock) || '').trim();
-  var buttonLabel = String(comms_getConfigValue_(configRecord, headers.buttonLabel) || '').trim();
+  var title = comms_interpolateText_(comms_getConfigValue_(configRecord, headers.title), vars);
+  var preheader = comms_interpolateText_(comms_getConfigValue_(configRecord, headers.preheader), vars);
+  var introText = comms_interpolateText_(comms_getConfigValue_(configRecord, headers.introText), vars);
+  var highlightBlock = comms_interpolateText_(comms_getConfigValue_(configRecord, headers.highlightBlock), vars);
+  var buttonLabel = comms_interpolateText_(comms_getConfigValue_(configRecord, headers.buttonLabel), vars);
   var buttonLink = String(comms_getConfigValue_(configRecord, headers.buttonLink) || '').trim();
-  var description = String(comms_getConfigValue_(configRecord, headers.description) || '').trim();
+  var description = comms_interpolateText_(comms_getConfigValue_(configRecord, headers.description), vars);
   var blocks = [];
 
   if (highlightBlock) {
@@ -414,12 +517,17 @@ function comms_buildPayload_(configRecord, eventBundle) {
   if (flowType === 'COMEMORACAO') {
     if (eventBundle.aggregate === false && eventBundle.items.length === 1) {
       var person = eventBundle.items[0];
+      if (person.yearsCompleted && person.integrationDate) {
+        introText = introText || ('Hoje celebramos ' + comms_formatYearsCompletedLabel_(person.yearsCompleted) + ' de grupo de ' + person.name + '.');
+      }
       introText = introText || ('Parabéns pelo seu dia, ' + person.name + '.');
       blocks.push({
-        title: 'Pessoa homenageada',
+        title: eventBundle.entityType === 'GRUPO' ? 'Grupo homenageado' : 'Pessoa homenageada',
         items: [
           { label: 'Nome', value: person.name },
           { label: 'Data', value: aniv_formatDate_(eventBundle.referenceDate) },
+          { label: 'Data de integracao', value: person.integrationDate ? aniv_formatDate_(person.integrationDate) : '' },
+          { label: 'Anos no grupo', value: person.yearsCompleted ? comms_formatYearsCompletedLabel_(person.yearsCompleted) : '' },
           { label: 'Origem', value: eventBundle.sourceLabel }
         ]
       });
@@ -472,7 +580,13 @@ function comms_buildPayload_(configRecord, eventBundle) {
 
 function comms_buildContract_(configRecord, eventBundle) {
   var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
+  var vars = comms_buildTemplateVariables_(Object.assign({}, eventBundle, {
+    communicationCode: String(comms_getConfigValue_(configRecord, headers.communicationCode) || '').trim(),
+    flowType: String(comms_getConfigValue_(configRecord, headers.flowType) || '').trim(),
+    eventSource: String(comms_getConfigValue_(configRecord, headers.eventSource) || '').trim()
+  }));
   var subjectHuman = String(comms_getConfigValue_(configRecord, headers.subjectHuman) || '').trim() || String(comms_getConfigValue_(configRecord, headers.description) || '').trim() || 'Comunicação GEAPA';
+  subjectHuman = comms_interpolateText_(subjectHuman, vars) || subjectHuman;
   var templateKey = String(comms_getConfigValue_(configRecord, headers.templateKey) || '').trim() || ANIV_CFG.COMUNICACOES.TEMPLATE_KEY;
   var priority = String(comms_getConfigValue_(configRecord, headers.priority) || '').trim() || ANIV_CFG.COMUNICACOES.PRIORITY;
   var recipients = comms_resolveRecipientBundle_(configRecord, eventBundle.items);
@@ -548,6 +662,7 @@ function comms_findLogByCorrelationKeyInRows_(rows, correlationKey) {
 
 function comms_buildPayloadSummary_(configRecord, contract, bundle) {
   var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
+  var firstItem = bundle && bundle.items && bundle.items.length ? bundle.items[0] : {};
   return {
     communicationCode: String(comms_getConfigValue_(configRecord, headers.communicationCode) || '').trim(),
     category: String(contract.metadata.category || '').trim(),
@@ -560,7 +675,18 @@ function comms_buildPayloadSummary_(configRecord, contract, bundle) {
     flowCode: String(contract.flowCode || '').trim(),
     subjectHuman: String(contract.subjectHuman || '').trim(),
     sendAfter: bundle && bundle.plannedDate ? bundle.plannedDate : '',
-    hasAttachmentsConfigured: (contract.metadata.attachmentRefs || []).length > 0
+    referenceDate: bundle && bundle.referenceDate ? bundle.referenceDate : '',
+    eventSource: String(contract.metadata.eventSource || '').trim(),
+    triggerMode: String(contract.metadata.triggerMode || '').trim(),
+    sourceLabel: String(bundle && bundle.sourceLabel ? bundle.sourceLabel : '').trim(),
+    templateRequested: String(contract.metadata.templateRequested || contract.templateKey || '').trim(),
+    templateFinal: String(contract.metadata.templateFinal || contract.templateKey || '').trim(),
+    recipientPreview: contract.metadata.recipientPreview || [],
+    triggerResponsible: String(contract.metadata.triggerResponsible || '').trim(),
+    bundleItemCount: bundle && bundle.items ? bundle.items.length : 0,
+    hasAttachmentsConfigured: (contract.metadata.attachmentRefs || []).length > 0,
+    yearsCompleted: Number(firstItem.yearsCompleted || 0),
+    integrationDate: firstItem.integrationDate ? aniv_formatDate_(firstItem.integrationDate) : ''
   };
 }
 
@@ -637,8 +763,16 @@ function comms_writeQueueLog_(rows, existingLog, configRecord, contract, bundle,
       configRowNumber: contract.metadata.configRowNumber,
       recipientMode: contract.metadata.recipientMode,
       recipientCount: contract.metadata.recipientCount,
+      recipientPreview: contract.metadata.recipientPreview || [],
       category: contract.metadata.category || '',
-      replyTo: contract.metadata.replyTo || ''
+      replyTo: contract.metadata.replyTo || '',
+      eventSource: contract.metadata.eventSource || '',
+      triggerMode: contract.metadata.triggerMode || '',
+      sourceLabel: bundle && bundle.sourceLabel ? bundle.sourceLabel : '',
+      templateRequested: contract.metadata.templateRequested || contract.templateKey || '',
+      templateFinal: contract.metadata.templateFinal || contract.templateKey || '',
+      triggerResponsible: contract.metadata.triggerResponsible || '',
+      attachmentCount: (contract.metadata.attachmentRefs || []).length
     }),
     'Atualizado Em': now
   };
@@ -664,6 +798,28 @@ function comms_writeQueueLog_(rows, existingLog, configRecord, contract, bundle,
   var inMemory = Object.assign({ __rowNumber: comms_getLogSheet_().getLastRow() }, createdPayload);
   rows.push(inMemory);
   return inMemory;
+}
+
+function comms_buildRecipientPreview_(contract) {
+  var all = []
+    .concat(Array.isArray(contract.to) ? contract.to : [])
+    .concat(Array.isArray(contract.cc) ? contract.cc : [])
+    .concat(Array.isArray(contract.bcc) ? contract.bcc : []);
+  return GEAPA_CORE.coreUniqueEmails(all).slice(0, 5);
+}
+
+function comms_setContractOperationalMetadata_(contract, bundle, opts) {
+  contract = contract || {};
+  contract.metadata = contract.metadata || {};
+  opts = opts || {};
+
+  contract.metadata.templateRequested = String(contract.templateKey || '').trim();
+  contract.metadata.templateFinal = String(contract.templateKey || '').trim();
+  contract.metadata.sourceLabel = String(bundle && bundle.sourceLabel ? bundle.sourceLabel : '').trim();
+  contract.metadata.triggerResponsible = opts.isManual === true ? 'MANUAL' : 'AUTOMATICO';
+  contract.metadata.recipientPreview = comms_buildRecipientPreview_(contract);
+  contract.metadata.bundleItemCount = bundle && bundle.items ? bundle.items.length : 0;
+  return contract;
 }
 
 function comms_buildBirthdayBundles_(configRecord, source, triggerMode, today) {
@@ -712,6 +868,67 @@ function comms_buildBirthdayBundles_(configRecord, source, triggerMode, today) {
     entityId: triggerMode === 'RESUMO_SEMANAL' ? Utilities.formatDate(today, ANIV_CFG.TZ, 'yyyyMMdd') : Utilities.formatDate(today, ANIV_CFG.TZ, 'yyyyMMdd')
   });
   return bundles;
+}
+
+function comms_buildIntegrationAnniversaryBundles_(configRecord, today) {
+  var items = aniv_getMemberIntegrationAnniversariesForWindow_(today, aniv_addDays_(today, 1)).map(function(item) {
+    return Object.assign({ sourceType: 'MEMBERS_ATUAIS' }, item);
+  });
+  var bundles = [];
+
+  if (!items.length) return bundles;
+
+  items.forEach(function(item) {
+    bundles.push({
+      aggregate: false,
+      milestoneType: 'ANIVERSARIO_INTEGRACAO_ANUAL',
+      items: [item],
+      referenceDate: item.anniversaryDate || today,
+      plannedDate: today,
+      sourceLabel: 'Tempo de grupo',
+      triggerMode: 'ANIVERSARIO_INTEGRACAO_ANUAL',
+      subtitle: comms_formatYearsCompletedLabel_(item.yearsCompleted) + ' de GEAPA',
+      entityType: 'MEMBRO',
+      entityId: item.email || item.name || ''
+    });
+  });
+
+  return bundles;
+}
+
+function comms_buildOfficialDataBundles_(configRecord, today) {
+  var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
+  var officialRecord = comms_getOfficialGroupRecord_();
+  if (!officialRecord) return [];
+
+  var originField = String(comms_getConfigValue_(configRecord, headers.originDateField) || '').trim() || ANIV_CFG.OFFICIAL_DATA.COL_CREATED_AT;
+  var originalDate = aniv_parseDateAny_(comms_getConfigValue_(officialRecord, originField));
+  if (!originalDate) return [];
+
+  var normalizedDate = aniv_normalizeToYear_(originalDate, today.getFullYear());
+  if (!aniv_inWindowMonthDay_(normalizedDate, today, aniv_addDays_(today, 1))) return [];
+
+  var groupName = String(comms_getConfigValue_(officialRecord, ANIV_CFG.OFFICIAL_DATA.COL_ORG_NAME) || '').trim();
+  var shortName = String(comms_getConfigValue_(officialRecord, ANIV_CFG.OFFICIAL_DATA.COL_SHORT_NAME) || '').trim();
+  var officialEmail = String(comms_getConfigValue_(officialRecord, ANIV_CFG.OFFICIAL_DATA.COL_EMAIL) || '').trim();
+  var displayName = groupName || shortName || 'GEAPA';
+
+  return [{
+    aggregate: false,
+    items: [{
+      name: displayName,
+      shortName: shortName || 'GEAPA',
+      email: officialEmail,
+      sourceType: 'DADOS_OFICIAIS_GEAPA'
+    }],
+    referenceDate: normalizedDate,
+    plannedDate: today,
+    sourceLabel: shortName || displayName,
+    triggerMode: 'DATA_ORIGEM',
+    subtitle: aniv_formatDate_(normalizedDate),
+    entityType: 'GRUPO',
+    entityId: shortName || displayName
+  }];
 }
 
 function comms_buildSemesterBundles_(configRecord, today, opts) {
@@ -785,11 +1002,17 @@ function comms_buildConfigBundles_(configRecord, today, opts) {
 
 function comms_collectBundlesForConfig_(configRecord, today, opts) {
   var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
-  var source = comms_normalizeText_(comms_getConfigValue_(configRecord, headers.eventSource));
+  var source = comms_normalizeEventSource_(comms_getConfigValue_(configRecord, headers.eventSource));
   var triggerMode = comms_normalizeText_(comms_getConfigValue_(configRecord, headers.triggerMode));
 
+  if (source === 'MEMBERS_ATUAIS' && triggerMode === 'ANIVERSARIO_INTEGRACAO_ANUAL') {
+    return comms_buildIntegrationAnniversaryBundles_(configRecord, today);
+  }
   if (source === 'MEMBERS_ATUAIS' || source === 'PROFESSORES') {
     return comms_buildBirthdayBundles_(configRecord, source, triggerMode, today);
+  }
+  if (source === 'DADOS_OFICIAIS_GEAPA') {
+    return comms_buildOfficialDataBundles_(configRecord, today);
   }
   if (source === 'VIGENCIA_SEMESTRES') {
     return comms_buildSemesterBundles_(configRecord, today, opts);
@@ -823,6 +1046,7 @@ function comms_processConfigRows_(today, filterFn, opts) {
       var existingLog = null;
       try {
         contract = comms_buildContract_(configRow, bundle);
+        comms_setContractOperationalMetadata_(contract, bundle, opts);
         if (opts.forceQueueDuplicate === true) {
           contract.forceQueueDuplicate = true;
           contract.metadata.forceQueueDuplicate = true;
@@ -923,6 +1147,14 @@ function comms_syncLogWithOutbox_() {
     var observations = comms_parseJson_(outboxRow['Observacoes'], {});
     var outboxMetadata = observations.metadata || {};
     var attempts = Number(outboxRow['Tentativas'] || 0);
+    var currentLogObservations = comms_parseJson_(comms_getConfigValue_(row, ANIV_CFG.COMUNICACOES.LOG_HEADERS.observations), {});
+    var mergedObservations = Object.assign({}, currentLogObservations, {
+      outboxStatus: String(outboxRow['Status Envio'] || '').trim(),
+      outboxAttempts: attempts,
+      outboxUpdatedAt: new Date(),
+      templateFinal: String(observations.templateKey || outboxMetadata.templateKey || currentLogObservations.templateFinal || '').trim(),
+      lastOutboxError: String(outboxRow['Ultimo Erro'] || '').trim()
+    });
 
     comms_updateLogRow_(row.__rowNumber, {
       'Status': String(outboxRow['Status Envio'] || '').trim(),
@@ -935,6 +1167,7 @@ function comms_syncLogWithOutbox_() {
       'Data Processamento': outboxRow['Enviado Em'] || '',
       'Tentativas Envio': attempts,
       'Template Usado': String(observations.templateKey || outboxMetadata.templateKey || comms_getConfigValue_(row, ANIV_CFG.COMUNICACOES.LOG_HEADERS.templateUsed) || '').trim(),
+      'Observacoes': JSON.stringify(mergedObservations),
       'Atualizado Em': new Date()
     });
     updated++;
@@ -976,6 +1209,51 @@ function comms_queueCommunicationByCode_(code, opts) {
   });
 }
 
+function comms_previewCommunicationByCode_(code, opts) {
+  opts = opts || {};
+  var configRow = comms_findConfigByCode_(code);
+  if (!configRow) {
+    throw new Error('Comunicacao nao encontrada ou inativa: ' + code);
+  }
+
+  var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
+  var manualDate = comms_startOfDay_(opts.refDate || aniv_now_());
+  var triggerMode = comms_normalizeText_(comms_getConfigValue_(configRow, headers.triggerMode));
+  var forceManual = opts.force === true || triggerMode === 'MANUAL' || triggerMode === 'DATA_MANUAL';
+  var bundles = comms_collectBundlesForConfig_(configRow, manualDate, {
+    forceManual: forceManual,
+    manualRunDate: manualDate
+  });
+  var rowIssues = comms_validateConfigRecord_(configRow);
+
+  return Object.freeze({
+    ok: rowIssues.filter(function(item) { return item.severity === 'ERROR'; }).length === 0,
+    communicationCode: String(comms_getConfigValue_(configRow, headers.communicationCode) || '').trim(),
+    rowNumber: configRow.__rowNumber || 0,
+    triggerMode: String(comms_getConfigValue_(configRow, headers.triggerMode) || '').trim(),
+    eventSource: String(comms_getConfigValue_(configRow, headers.eventSource) || '').trim(),
+    issues: rowIssues,
+    bundles: bundles.map(function(bundle) {
+      var contract = comms_buildContract_(configRow, bundle);
+      comms_setContractOperationalMetadata_(contract, bundle, {
+        isManual: forceManual
+      });
+      return Object.freeze({
+        correlationKey: contract.correlationKey,
+        templateKey: contract.templateKey,
+        subjectHuman: contract.subjectHuman,
+        recipientCount: Number(contract.metadata.recipientCount || 0),
+        recipientPreview: contract.metadata.recipientPreview || [],
+        plannedDate: bundle.plannedDate || '',
+        referenceDate: bundle.referenceDate || '',
+        entityType: contract.entityType,
+        entityId: contract.entityId,
+        payloadSummary: comms_buildPayloadSummary_(configRow, contract, bundle)
+      });
+    })
+  });
+}
+
 function comms_processBirthdaysTodayBySource_(source) {
   var today = aniv_startOfDay_(aniv_now_());
   return comms_processConfigRows_(today, function(configRow) {
@@ -1001,9 +1279,11 @@ function comms_processConfiguredDaily_() {
   var today = aniv_startOfDay_(aniv_now_());
   return comms_processConfigRows_(today, function(configRow) {
     var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
-    var source = comms_normalizeText_(comms_getConfigValue_(configRow, headers.eventSource));
+    var source = comms_normalizeEventSource_(comms_getConfigValue_(configRow, headers.eventSource));
     var triggerMode = comms_normalizeText_(comms_getConfigValue_(configRow, headers.triggerMode));
+    if (source === 'MEMBERS_ATUAIS' && triggerMode === 'ANIVERSARIO_INTEGRACAO_ANUAL') return true;
     return (source === 'VIGENCIA_SEMESTRES' && triggerMode === 'DATA_ORIGEM') ||
+      (source === 'DADOS_OFICIAIS_GEAPA' && triggerMode === 'DATA_ORIGEM') ||
       (source === 'CONFIG' && triggerMode === 'DATA_MANUAL');
   });
 }

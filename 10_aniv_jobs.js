@@ -25,6 +25,10 @@ function checkBirthdaysToday() {
   }
 }
 
+function processMemberBirthdaysToday() {
+  return checkBirthdaysToday();
+}
+
 function checkProfsBirthdaysToday() {
   const runId = GEAPA_CORE.coreRunId();
   GEAPA_CORE.coreLogInfo(runId, 'checkProfsBirthdaysToday: INICIO');
@@ -42,6 +46,10 @@ function checkProfsBirthdaysToday() {
   } finally {
     lock.releaseLock();
   }
+}
+
+function processProfessorBirthdaysToday() {
+  return checkProfsBirthdaysToday();
 }
 
 function weeklyBirthdayDigest() {
@@ -71,6 +79,10 @@ function weeklyBirthdayDigest() {
   }
 }
 
+function processMemberBirthdaysWeekly() {
+  return weeklyBirthdayDigest();
+}
+
 function weeklyProfsBirthdayDigest() {
   const runId = GEAPA_CORE.coreRunId();
   GEAPA_CORE.coreLogInfo(runId, 'weeklyProfsBirthdayDigest: INICIO');
@@ -96,4 +108,8 @@ function weeklyProfsBirthdayDigest() {
   } finally {
     lock.releaseLock();
   }
+}
+
+function processProfessorBirthdaysWeekly() {
+  return weeklyProfsBirthdayDigest();
 }

@@ -30,6 +30,7 @@ const ANIV_KEYS = Object.freeze({
   MEMBERS: 'MEMBERS_ATUAIS',           // Base de membros (nome, nascimento, e-mail, cargo, insta)
   PROFS: 'PROFS_BASE',                 // Base de professores (nome, e-mail, nascimento)
   SEMESTERS: 'VIGENCIA_SEMESTRES',     // Datas oficiais do calendario academico
+  OFFICIAL_DATA: 'DADOS_OFICIAIS_GEAPA', // Dados oficiais do grupo
   COMUNICACOES_LOG: 'COMUNICACOES_LOG',        // Log local principal do motor de comunicacoes
   COMUNICACOES_CONFIG: 'COMUNICACOES_CONFIG',  // Configuracao principal do motor de comunicacoes
 });
@@ -68,13 +69,14 @@ const ANIV_CFG = Object.freeze({
      * Colunas (cabeçalhos) esperadas na base de membros.
      * Quando usar: leitores que montam lista de membros.
      */
-    COL_NAME: 'MEMBRO',
-    COL_RGA: 'RGA',
-    COL_BIRTHDATE: 'DATA DE NASCIMENTO',  // aceita DD/MM/AAAA ou DD/MM (depende do parser)
-    COL_EMAIL: 'EMAIL',
-    COL_STATUS: 'Status',
-    COL_ROLE: 'Cargo/função atual',
-    COL_INSTA: '@ Instagram',             // opcional
+    COL_NAME: Object.freeze(['MEMBRO', 'Membro', 'NOME_MEMBRO', 'Nome']),
+    COL_RGA: Object.freeze(['RGA']),
+    COL_BIRTHDATE: Object.freeze(['DATA DE NASCIMENTO', 'Data de nascimento', 'DATA_NASCIMENTO']),  // aceita DD/MM/AAAA ou DD/MM (depende do parser)
+    COL_INTEGRATION_DATE: Object.freeze(['DATA_INTEGRACAO', 'DATA INTEGRACAO', 'Data Integracao', 'Data de Integracao']),
+    COL_EMAIL: Object.freeze(['EMAIL', 'Email', 'E-mail']),
+    COL_STATUS: Object.freeze(['Status', 'STATUS_CADASTRAL']),
+    COL_ROLE: Object.freeze(['Cargo/fun\u00E7\u00E3o atual', 'Cargo/funcao atual', 'CARGO_FUNCAO_ATUAL']),
+    COL_INSTA: Object.freeze(['@ Instagram', 'INSTAGRAM']),             // opcional
     ACTIVE_STATUS_VALUES: Object.freeze(['ATIVO', 'ATIVA', 'SIM']),
   }),
 
@@ -91,7 +93,18 @@ const ANIV_CFG = Object.freeze({
   }),
 
   // ==========================================================
-  // 3) DESTINATÁRIOS AUTOMÁTICOS (COMUNICAÇÃO)
+  // 3) DADOS OFICIAIS DO GRUPO
+  // ==========================================================
+  OFFICIAL_DATA: Object.freeze({
+    KEY: ANIV_KEYS.OFFICIAL_DATA,
+    COL_ORG_NAME: 'NOME_OFICIAL_GRUPO',
+    COL_SHORT_NAME: 'SIGLA_OFICIAL_GRUPO',
+    COL_EMAIL: 'EMAIL_OFICIAL',
+    COL_CREATED_AT: 'DATA_OFICIAL_CRIACAO'
+  }),
+
+  // ==========================================================
+  // 4) DESTINATÁRIOS AUTOMÁTICOS (COMUNICAÇÃO)
   // ==========================================================
   COMM: Object.freeze({
     /**
@@ -121,7 +134,7 @@ const ANIV_CFG = Object.freeze({
   }),
 
   // ==========================================================
-  // 4) E-MAIL / ASSUNTOS
+  // 5) E-MAIL / ASSUNTOS
   // ==========================================================
   EMAIL: Object.freeze({
     /** E-mail fixo opcional (se quiser CC/BCC institucional). Deixe vazio se não usar. */
@@ -140,7 +153,7 @@ const ANIV_CFG = Object.freeze({
   }),
 
   // ==========================================================
-  // 5) VISUAL / IDENTIDADE
+  // 6) VISUAL / IDENTIDADE
   // ==========================================================
   BRAND: Object.freeze({
     /**
@@ -158,7 +171,7 @@ const ANIV_CFG = Object.freeze({
   }),
 
   // ==========================================================
-// 6) VIGÊNCIAS / DESTINATÁRIO DA COMUNICAÇÃO
+// 7) VIGÊNCIAS / DESTINATÁRIO DA COMUNICAÇÃO
 // ==========================================================
   VIGENCIA: Object.freeze({
     DIRETORIAS_KEY: 'VIGENCIA_DIRETORIAS',
@@ -183,7 +196,7 @@ const ANIV_CFG = Object.freeze({
   }),
 
   // ==========================================================
-  // 7) COMUNICACOES / MOTOR CONFIGURAVEL
+  // 8) COMUNICACOES / MOTOR CONFIGURAVEL
   // ==========================================================
   COMUNICACOES: Object.freeze({
     MODULE_NAME: 'COMEMORACOES',
@@ -191,6 +204,7 @@ const ANIV_CFG = Object.freeze({
     LOG_KEY: ANIV_KEYS.COMUNICACOES_LOG,
     CONFIG_KEY: ANIV_KEYS.COMUNICACOES_CONFIG,
     OUTBOX_KEY: 'MAIL_SAIDA',
+    VALIDATION_SHEET_NAME: 'Comunicacoes_Validacao',
     TEMPLATE_KEY: 'GEAPA_OPERACIONAL',
     RECIPIENT_MODE: 'MEMBERS_ATUAIS',
     FIXED_EMAIL: '',

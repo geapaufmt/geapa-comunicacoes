@@ -18,12 +18,28 @@ function processScheduledCommunicationsToday() {
   return comms_processConfiguredDaily_();
 }
 
+function runScheduledCommunicationsToday() {
+  return processScheduledCommunicationsToday();
+}
+
+function processDailyCommunications() {
+  return processScheduledCommunicationsToday();
+}
+
 function processAcademicNoticeOutbox() {
   return comms_processOutboxAndSync_();
 }
 
 function processCommunicationsOutbox() {
   return comms_processOutboxAndSync_();
+}
+
+function runCommunicationsOutbox() {
+  return processCommunicationsOutbox();
+}
+
+function syncCommunicationsOperationalLog() {
+  return syncCommunicationsLog();
 }
 
 function queueCommunicationByCode(code, opts) {
