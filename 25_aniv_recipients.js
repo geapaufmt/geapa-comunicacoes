@@ -3,28 +3,32 @@
  * DESTINATÁRIO DA COMUNICAÇÃO VIA VIGÊNCIAS
  *
  * Responsabilidade:
- * - Descobrir quem é a coordenação de comunicação vigente
+ * - Descobrir quem ocupa a coordenação de comunicação vigente
  * - Cruzar com a base MEMBERS_ATUAIS para obter o e-mail
  **************************************/
 /**
- * Retorna a lista de e-mails da coordenação de comunicação vigente.
+ * Retorna a lista de e-mails da ocupação institucional vigente de comunicação.
  *
  * Agora resolvido pelo GEAPA_CORE a partir da projeção institucional atual.
  */
 function getCommunicationRecipientEmails_() {
   const runId = GEAPA_CORE.coreRunId();
+  const occupationName = ANIV_CFG.VIGENCIA.COMM_ROLE_NAME;
 
   try {
-    const emails = GEAPA_CORE.coreGetCurrentEmailsByRole('Coordenador(a) de Comunicação');
+    const emails = GEAPA_CORE.coreGetCurrentEmailsByRole(occupationName);
 
     if (!emails.length) {
-      GEAPA_CORE.coreLogWarn(runId, 'Comunicação: coordenação vigente não encontrada', {});
+      GEAPA_CORE.coreLogWarn(runId, 'Comunicação: ocupação vigente não encontrada', {
+        occupationName: occupationName
+      });
       return [];
     }
 
     GEAPA_CORE.coreLogInfo(runId, 'Comunicação: destinatário(s) encontrado(s)', {
       count: emails.length,
-      emails: emails
+      emails: emails,
+      occupationName: occupationName
     });
 
     return emails;
@@ -38,7 +42,7 @@ function getCommunicationRecipientEmails_() {
 }
 
 /**
- * Envia o resumo para a coordenação de comunicação vigente.
+ * Envia o resumo para a ocupação institucional vigente de comunicação.
  */
 function aniv_sendToCommunication_(subject, htmlBody) {
   const runId = GEAPA_CORE.coreRunId();

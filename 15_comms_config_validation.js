@@ -8,7 +8,7 @@ const COMMS_CONFIG_CATALOG = Object.freeze({
   flowTypes: Object.freeze(['COMEMORACAO', 'AVISO_ACADEMICO', 'COMUNICADO_GERAL']),
   eventSources: Object.freeze(['MEMBERS_ATUAIS', 'PROFESSORES', 'VIGENCIA_SEMESTRES', 'DADOS_OFICIAIS_GEAPA', 'CONFIG']),
   triggerModes: Object.freeze(['DATA_ORIGEM', 'DATA_MANUAL', 'RESUMO_SEMANAL', 'ANIVERSARIO_INTEGRACAO_ANUAL', 'MANUAL']),
-  recipientModes: Object.freeze(['FIXO', 'LISTA_FIXA', 'MEMBERS_ATUAIS', 'MEMBERS_E_PROFESSORES', 'EMAIL_GROUP', 'EVENT_SOURCE_EMAIL']),
+  recipientModes: Object.freeze(['FIXO', 'LISTA_FIXA', 'MEMBERS_ATUAIS', 'PROFESSORES', 'MEMBERS_E_PROFESSORES', 'EMAIL_GROUP', 'EVENT_SOURCE_EMAIL']),
   templateKeys: Object.freeze(['GEAPA_COMEMORATIVO', 'GEAPA_OPERACIONAL', 'GEAPA_CONVITE', 'GEAPA_CLASSICO']),
   priorities: Object.freeze(['BAIXA', 'MEDIA', 'ALTA', 'NORMAL'])
 });
@@ -75,7 +75,7 @@ function comms_getConfigDropdownRules_() {
     rules[headers.recipientMode] = {
       values: COMMS_CONFIG_CATALOG.recipientModes,
       allowInvalid: false,
-      helpText: 'Regras suportadas: FIXO, LISTA_FIXA, MEMBERS_ATUAIS, MEMBERS_E_PROFESSORES, EMAIL_GROUP e EVENT_SOURCE_EMAIL.'
+      helpText: 'Regras suportadas: FIXO, LISTA_FIXA, MEMBERS_ATUAIS, PROFESSORES, MEMBERS_E_PROFESSORES, EMAIL_GROUP e EVENT_SOURCE_EMAIL.'
     };
     rules[headers.sendAsBcc] = {
       values: COMMS_CONFIG_CATALOG.yesNo,

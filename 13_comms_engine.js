@@ -315,6 +315,8 @@ function comms_resolveRecipientBundle_(configRecord, eventItems) {
     recipients = GEAPA_CORE.coreUniqueEmails(
       comms_listCurrentMemberEmails_().concat(comms_listCurrentProfessorEmails_())
     );
+  } else if (mode === 'PROFESSORES') {
+    recipients = comms_listCurrentProfessorEmails_();
   } else if (mode === 'EMAIL_GROUP') {
     recipients = GEAPA_CORE.coreGetCurrentEmailsByEmailGroup(comms_getConfigValue_(configRecord, headers.institutionalGroup) || '');
   } else if (mode === 'EVENT_SOURCE_EMAIL') {

@@ -7,9 +7,10 @@ function aniv_sendBirthdayMessageToMember_(m, day) {
   if (!GEAPA_CORE.coreIsValidEmail(m.email)) return;
 
   const subject = `🎉 Feliz aniversário, ${aniv_firstName_(m.name)}! — GEAPA`;
+  const occupationLabel = aniv_formatOccupationDisplay_(aniv_getEntityOccupation_(m));
 
   const items = [];
-  items.push({ line1: `🎂 ${aniv_safe_(m.name)}`, line2: m.role ? aniv_safe_(m.role) : '' });
+  items.push({ line1: `🎂 ${aniv_safe_(m.name)}`, line2: occupationLabel ? aniv_safe_(occupationLabel) : '' });
   if (m.insta) items.push({ line1: `📷 Instagram`, line2: aniv_safe_(m.insta) });
 
   const html = aniv_buildHtmlEmail_({
@@ -76,7 +77,7 @@ function aniv_notifyCommunicationMembers_(rows, startDay, endDay, weekly) {
   const items = rows.length
     ? rows.map(m => ({
         line1: `🎉 ${aniv_safe_(m.name)}`,
-        line2: `${aniv_safe_(aniv_formatBirth_(aniv_normalizeToYear_(m.birth, startDay.getFullYear())))}${m.role ? ` — ${aniv_safe_(m.role)}` : ''}`
+        line2: `${aniv_safe_(aniv_formatBirth_(aniv_normalizeToYear_(m.birth, startDay.getFullYear())))}${aniv_getEntityOccupation_(m) ? ` — ${aniv_safe_(aniv_formatOccupationDisplay_(aniv_getEntityOccupation_(m)))}` : ''}`
       }))
     : [{ line1: 'Sem aniversariantes no período.', line2: '' }];
 
@@ -143,7 +144,7 @@ function aniv_notifyCommunicationCombined_(memberRows, profRows, startDay, endDa
     memberRows.forEach(m => {
       items.push({
         line1: `🎉 ${aniv_safe_(m.name)}`,
-        line2: `${aniv_safe_(aniv_formatBirth_(aniv_normalizeToYear_(m.birth, startDay.getFullYear())))}${m.role ? ` — ${aniv_safe_(m.role)}` : ''}`
+        line2: `${aniv_safe_(aniv_formatBirth_(aniv_normalizeToYear_(m.birth, startDay.getFullYear())))}${aniv_getEntityOccupation_(m) ? ` — ${aniv_safe_(aniv_formatOccupationDisplay_(aniv_getEntityOccupation_(m)))}` : ''}`
       });
     });
   }
