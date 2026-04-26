@@ -10,7 +10,7 @@ function aniv_getMemberBirthdaysForWindow_(startInclusive, endExclusive) {
   const iName = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_NAME);
   const iBirth = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_BIRTHDATE);
   const iEmail = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_EMAIL);
-  const iRole = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_ROLE, true);
+  const iOccupation = aniv_findOccupationHeaderIndex_(data.headers, true);
   const iInsta = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_INSTA, true);
 
   if (iName < 0 || iBirth < 0 || iEmail < 0) return [];
@@ -29,10 +29,12 @@ function aniv_getMemberBirthdaysForWindow_(startInclusive, endExclusive) {
 
     const normalized = aniv_normalizeToYear_(birth, startYear);
     if (aniv_inWindowMonthDay_(normalized, startInclusive, endExclusive)) {
+      const occupation = aniv_getOccupationValue_(row, data.headers, iOccupation);
       out.push({
         name,
         email,
-        role: iRole >= 0 ? String(row[iRole] || '').trim() : '',
+        occupation,
+        role: occupation,
         insta: iInsta >= 0 ? String(row[iInsta] || '').trim() : '',
         birth
       });
@@ -83,7 +85,7 @@ function aniv_getMemberIntegrationAnniversariesForWindow_(startInclusive, endExc
   const iIntegration = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_INTEGRATION_DATE);
   const iEmail = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_EMAIL, true);
   const iStatus = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_STATUS, true);
-  const iRole = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_ROLE, true);
+  const iOccupation = aniv_findOccupationHeaderIndex_(data.headers, true);
   const iInsta = aniv_findHeaderIndex_(data.headers, ANIV_CFG.MEMBERS.COL_INSTA, true);
 
   if (iName < 0 || iIntegration < 0) return [];
@@ -110,10 +112,13 @@ function aniv_getMemberIntegrationAnniversariesForWindow_(startInclusive, endExc
     if (yearsCompleted < 1) continue;
     if (!aniv_inWindowMonthDay_(normalizedAnniversary, startInclusive, endExclusive)) continue;
 
+    const occupation = aniv_getOccupationValue_(row, data.headers, iOccupation);
+
     out.push({
       name,
       email,
-      role: iRole >= 0 ? String(row[iRole] || '').trim() : '',
+      occupation,
+      role: occupation,
       insta: iInsta >= 0 ? String(row[iInsta] || '').trim() : '',
       integrationDate,
       anniversaryDate: normalizedAnniversary,

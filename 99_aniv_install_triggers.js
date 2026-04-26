@@ -32,8 +32,8 @@ function comms_getManagedTriggerSpecs_() {
     Object.freeze({
       handler: 'processScheduledCommunicationsToday',
       label: 'Comunicacoes agendadas do dia',
-      scheduleType: 'DAILY',
-      expectedSummary: 'Todo dia as 6h'
+      scheduleType: 'HOURLY',
+      expectedSummary: 'A cada 2 horas'
     }),
     Object.freeze({
       handler: 'processCommunicationsOutbox',
@@ -92,8 +92,7 @@ function comms_createManagedTriggers_() {
 
   ScriptApp.newTrigger('processScheduledCommunicationsToday')
     .timeBased()
-    .everyDays(1)
-    .atHour(6)
+    .everyHours(2)
     .create();
 
   ScriptApp.newTrigger('processCommunicationsOutbox')

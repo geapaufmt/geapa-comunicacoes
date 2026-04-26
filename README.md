@@ -17,6 +17,22 @@ O modulo nao monta o HTML final na mao. Ele detecta eventos, resolve destinatari
 - envio tecnico
 - registro em `MAIL_SAIDA`, `MAIL_EVENTOS` e `MAIL_INDICE`
 
+## Compatibilidade Semantica
+
+Em `2026-04-24`, o modulo passou a adotar `Ocupação` como termo preferencial de negocio e interface, sem renomear fisicamente os cabecalhos oficiais existentes.
+
+Camada centralizada desta etapa:
+
+- aliases compativeis para leitura: `Ocupação`, `Ocupacao`, `Ocupação atual`, `Ocupacao atual`, `Cargo/Função`, `Cargo/Funcao`, `Cargo/função atual`, `Cargo/funcao atual` e `CARGO_FUNCAO_ATUAL`
+- resolucao centralizada do campo semantico em [00_aniv_config.js](/C:/Users/Windows%2010/geapa-comemoracoes/00_aniv_config.js) e [50_aniv_utils_misc.js](/C:/Users/Windows%2010/geapa-comemoracoes/50_aniv_utils_misc.js)
+- preferencia por `Ocupação` em novos textos visiveis, e-mails e labels
+- preservacao do alias legado `COL_ROLE` para nao quebrar chamadas internas ou integracoes antigas
+
+Observacao importante:
+
+- este modulo hoje le e exibe a ocupacao dos membros, mas nao persiste esse campo de volta nas bases oficiais
+- para futuras escritas, use `aniv_resolveOccupationHeaderForWrite_(headers)` para priorizar `Ocupação` quando ela existir e cair para o cabecalho legado presente na aba
+
 ## Arquitetura
 
 Arquivos principais:
@@ -125,6 +141,7 @@ Observacao:
 - `FIXO`
 - `LISTA_FIXA`
 - `MEMBERS_ATUAIS`
+- `PROFESSORES`
 - `MEMBERS_E_PROFESSORES`
 - `EMAIL_GROUP`
 - `EVENT_SOURCE_EMAIL`
@@ -133,6 +150,11 @@ Observacao importante sobre `MEMBERS_ATUAIS`:
 
 - o modulo usa a coluna `Status` da planilha `MEMBERS_ATUAIS`
 - entram como destinatarios os registros com status ativo, como `ATIVO`, `ATIVA` ou `SIM`
+- para a ocupacao institucional do membro, o modulo aceita tanto cabecalhos novos (`Ocupação`/`Ocupacao`) quanto legados (`Cargo/Função`/`Cargo/Funcao`) e suas variantes `*_ATUAL`
+
+Observacao sobre `PROFESSORES`:
+
+- resolve os emails da base `PROFS_BASE`
 
 Observacao sobre `MEMBERS_E_PROFESSORES`:
 
@@ -240,7 +262,7 @@ Processamento automatico:
 - `checkProfsBirthdaysToday()`
 - `weeklyBirthdayDigest()`
 - `weeklyProfsBirthdayDigest()`
-- `processScheduledCommunicationsToday()`
+- `processScheduledCommunicationsToday()` a cada 2 horas
 - `processCommunicationsOutbox()`
 
 Nomes recomendados na nomenclatura nova:

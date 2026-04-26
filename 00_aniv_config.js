@@ -35,6 +35,36 @@ const ANIV_KEYS = Object.freeze({
   COMUNICACOES_CONFIG: 'COMUNICACOES_CONFIG',  // Configuracao principal do motor de comunicacoes
 });
 
+const ANIV_SEMANTIC_FIELDS = Object.freeze({
+  OCCUPATION: Object.freeze({
+    label: 'Ocupação',
+    legacyLabel: 'Cargo/Função',
+    aliases: Object.freeze([
+      'Ocupação',
+      'Ocupacao',
+      'Ocupação atual',
+      'Ocupacao atual',
+      'OCUPACAO_ATUAL',
+      'Cargo/Função',
+      'Cargo/Funcao',
+      'Cargo/função atual',
+      'Cargo/funcao atual',
+      'CARGO_FUNCAO_ATUAL'
+    ]),
+    preferredWriteOrder: Object.freeze([
+      'Ocupação',
+      'Ocupacao',
+      'Ocupação atual',
+      'Ocupacao atual',
+      'Cargo/Função',
+      'Cargo/Funcao',
+      'Cargo/função atual',
+      'Cargo/funcao atual',
+      'CARGO_FUNCAO_ATUAL'
+    ])
+  })
+});
+
 /**
  * ------------------------------------------------------------
  * Configuração principal do módulo
@@ -75,7 +105,8 @@ const ANIV_CFG = Object.freeze({
     COL_INTEGRATION_DATE: Object.freeze(['DATA_INTEGRACAO', 'DATA INTEGRACAO', 'Data Integracao', 'Data de Integracao']),
     COL_EMAIL: Object.freeze(['EMAIL', 'Email', 'E-mail']),
     COL_STATUS: Object.freeze(['Status', 'STATUS_CADASTRAL']),
-    COL_ROLE: Object.freeze(['Cargo/fun\u00E7\u00E3o atual', 'Cargo/funcao atual', 'CARGO_FUNCAO_ATUAL']),
+    COL_OCCUPATION: ANIV_SEMANTIC_FIELDS.OCCUPATION.aliases,
+    COL_ROLE: ANIV_SEMANTIC_FIELDS.OCCUPATION.aliases,
     COL_INSTA: Object.freeze(['@ Instagram', 'INSTAGRAM']),             // opcional
     ACTIVE_STATUS_VALUES: Object.freeze(['ATIVO', 'ATIVA', 'SIM']),
   }),
@@ -108,11 +139,11 @@ const ANIV_CFG = Object.freeze({
   // ==========================================================
   COMM: Object.freeze({
     /**
-     * Regra: identificar membros da comunicação/marketing pela descrição do cargo.
+     * Regra: identificar membros da comunicação/marketing pela descrição da ocupação.
      * Ex.: "Diretor de Comunicação", "Coordenação de Marketing", etc.
      *
      * Como funciona:
-     * - O módulo procura no texto do cargo (COL_ROLE) por termos abaixo.
+     * - O módulo procura no texto da ocupação (COL_OCCUPATION/COL_ROLE) por termos abaixo.
      */
     ROLES_MATCH: [
       'comunica',          // Comunicação, comunicacao
@@ -123,7 +154,7 @@ const ANIV_CFG = Object.freeze({
     ],
 
     /**
-     * Se true: restringe para cargos que também contenham a palavra "coord"
+     * Se true: restringe para ocupações que também contenham a palavra "coord"
      * (coordenação/coordenador/coordenadora).
      *
      * Quando usar:
@@ -185,13 +216,14 @@ const ANIV_CFG = Object.freeze({
     // Aba Membros_Diretoria
     MEMBROS_COL_NAME: 'Nome',
     MEMBROS_COL_RGA: 'RGA',
-    MEMBROS_COL_ROLE: 'Cargo/Função',
+    MEMBROS_COL_OCCUPATION: ANIV_SEMANTIC_FIELDS.OCCUPATION.aliases,
+    MEMBROS_COL_ROLE: ANIV_SEMANTIC_FIELDS.OCCUPATION.aliases,
     MEMBROS_COL_BOARD_ID: 'ID_Diretoria',
     MEMBROS_COL_START: 'Data_Início',
     MEMBROS_COL_END: 'Data_Fim',
     MEMBROS_COL_END_PLANNED: 'Data_Fim_previsto',
 
-    // Cargo que deve receber o resumo semanal
+    // Ocupação que deve receber o resumo semanal
     COMM_ROLE_NAME: 'Coordenador(a) de Comunicação',
   }),
 
