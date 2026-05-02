@@ -62,6 +62,18 @@ const ANIV_SEMANTIC_FIELDS = Object.freeze({
       'Cargo/funcao atual',
       'CARGO_FUNCAO_ATUAL'
     ])
+  }),
+  COMMUNICATION_OCCUPATION: Object.freeze({
+    label: 'Diretor(a) de Comunicação',
+    roleKey: 'DIRETOR_COMUNICACAO',
+    aliases: Object.freeze([
+      'Diretor(a) de Comunicação',
+      'Diretor de Comunicação',
+      'DIRETOR_COMUNICACAO',
+      'Coordenador(a) de Comunicação',
+      'Coordenador de Comunicação',
+      'COORDENADOR_COMUNICACAO'
+    ])
   })
 });
 
@@ -223,8 +235,13 @@ const ANIV_CFG = Object.freeze({
     MEMBROS_COL_END: 'Data_Fim',
     MEMBROS_COL_END_PLANNED: 'Data_Fim_previsto',
 
-    // Ocupação que deve receber o resumo semanal
-    COMM_ROLE_NAME: 'Coordenador(a) de Comunicação',
+    // Ocupação institucional vigente que deve receber os resumos do módulo.
+    COMM_OCCUPATION_NAME: ANIV_SEMANTIC_FIELDS.COMMUNICATION_OCCUPATION.label,
+    COMM_OCCUPATION_KEY: ANIV_SEMANTIC_FIELDS.COMMUNICATION_OCCUPATION.roleKey,
+    COMM_OCCUPATION_ALIASES: ANIV_SEMANTIC_FIELDS.COMMUNICATION_OCCUPATION.aliases,
+    COMM_ROLE_NAME: ANIV_SEMANTIC_FIELDS.COMMUNICATION_OCCUPATION.label,
+    COMM_ROLE_KEY: ANIV_SEMANTIC_FIELDS.COMMUNICATION_OCCUPATION.roleKey,
+    COMM_ROLE_ALIASES: ANIV_SEMANTIC_FIELDS.COMMUNICATION_OCCUPATION.aliases,
   }),
 
   // ==========================================================
@@ -244,6 +261,42 @@ const ANIV_CFG = Object.freeze({
     EMAIL_GROUP_NAME: '',
     SEND_AS_BCC: true,
     PRIORITY: 'NORMAL',
+    OPERABILITY: Object.freeze({
+      MODULE_NAME: 'COMUNICACOES',
+      STATUS_SPREADSHEET_ID: '1KQ_-GcFuvLA-jrPVQsfE3_TuaR8AM0yM4X41AzEGXGI',
+      STATUS_SHEET_NAME: 'MODULOS_STATUS',
+      FLOWS: Object.freeze({
+        GENERAL: 'GERAL',
+        SCHEDULED: 'PROCESSAR_AGENDADAS',
+        OUTBOX: 'PROCESSAR_FILA',
+        MEMBER_BIRTHDAYS: 'ANIVERSARIOS_MEMBROS',
+        PROFESSOR_BIRTHDAYS: 'ANIVERSARIOS_PROFESSORES',
+        WEEKLY_SUMMARY: 'RESUMO_SEMANAL',
+        MANUALS: 'MANUAIS'
+      }),
+      CAPABILITIES: Object.freeze({
+        SYNC: 'SYNC',
+        EMAIL: 'EMAIL'
+      }),
+      STATUS_HEADERS: Object.freeze({
+        moduleName: 'MODULO',
+        flowName: 'FLUXO',
+        updatedAt: 'ATUALIZADO_EM',
+        lastMode: 'ULTIMO_MODO',
+        lastCapability: 'ULTIMA_CAPABILITY',
+        lastExecutionType: 'ULTIMA_EXECUCAO_TIPO',
+        lastConfigLine: 'ULTIMA_LINHA_CONFIG',
+        lastFallbackType: 'ULTIMO_FALLBACK_CONFIG',
+        lastBlockedAt: 'ULTIMO_BLOQUEIO_EM',
+        lastBlockedReason: 'ULTIMO_BLOQUEIO_MOTIVO',
+        lastDryRunAt: 'ULTIMO_DRY_RUN_EM',
+        lastDryRunSummary: 'ULTIMO_DRY_RUN_RESUMO',
+        lastSuccessAt: 'ULTIMO_SUCESSO_EM',
+        lastSuccessSummary: 'ULTIMO_SUCESSO_RESUMO',
+        lastErrorAt: 'ULTIMO_ERRO_EM',
+        lastError: 'ULTIMO_ERRO'
+      })
+    }),
     SEMESTER_HEADERS: Object.freeze({
       id: 'ID_Semestre',
       start: 'Início',
