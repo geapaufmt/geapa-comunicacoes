@@ -3,7 +3,7 @@
  * DESTINATÁRIO DA COMUNICAÇÃO VIA VIGÊNCIAS
  *
  * Responsabilidade:
- * - Descobrir quem ocupa a coordenação de comunicação vigente
+ * - Descobrir quem ocupa a diretoria/ocupação institucional vigente de comunicação
  * - Cruzar com a base MEMBERS_ATUAIS para obter o e-mail
  **************************************/
 /**
@@ -11,16 +11,58 @@
  *
  * Agora resolvido pelo GEAPA_CORE a partir da projeção institucional atual.
  */
+function aniv_resolveCommunicationRoleQueries_() {
+  var candidates = [];
+  var seen = {};
+
+  function pushCandidate(value) {
+    var text = String(value || '').trim();
+    if (!text) return;
+    var key = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+    if (seen[key]) return;
+    seen[key] = true;
+    candidates.push(text);
+  }
+
+  pushCandidate(aniv_getCommunicationOccupationRoleKey_());
+  pushCandidate(ANIV_CFG.VIGENCIA.COMM_OCCUPATION_NAME);
+  pushCandidate(ANIV_CFG.VIGENCIA.COMM_ROLE_NAME);
+  aniv_getCommunicationOccupationAliases_().forEach(pushCandidate);
+
+  return candidates;
+}
+
 function getCommunicationRecipientEmails_() {
   const runId = GEAPA_CORE.coreRunId();
-  const occupationName = ANIV_CFG.VIGENCIA.COMM_ROLE_NAME;
+  const preferredOccupationName = aniv_getCommunicationOccupationLabel_();
+  const queries = aniv_resolveCommunicationRoleQueries_();
+  const emailsByNormalizedValue = {};
 
   try {
-    const emails = GEAPA_CORE.coreGetCurrentEmailsByRole(occupationName);
+    queries.forEach(function(query) {
+      var currentEmails = [];
+
+      if (typeof GEAPA_CORE.coreGetCurrentEmailsByOccupation === 'function') {
+        currentEmails = GEAPA_CORE.coreGetCurrentEmailsByOccupation(query) || [];
+      } else {
+        currentEmails = GEAPA_CORE.coreGetCurrentEmailsByRole(query) || [];
+      }
+
+      currentEmails.forEach(function(email) {
+        var normalized = String(email || '').trim().toLowerCase();
+        if (!normalized) return;
+        emailsByNormalizedValue[normalized] = String(email || '').trim();
+      });
+    });
+
+    const emails = Object.keys(emailsByNormalizedValue)
+      .sort()
+      .map(function(key) { return emailsByNormalizedValue[key]; });
 
     if (!emails.length) {
-      GEAPA_CORE.coreLogWarn(runId, 'Comunicação: ocupação vigente não encontrada', {
-        occupationName: occupationName
+      GEAPA_CORE.coreLogWarn(runId, 'Comunicação: ocupação institucional vigente não encontrada', {
+        preferredOccupationName: preferredOccupationName,
+        queries: queries
       });
       return [];
     }
@@ -28,7 +70,8 @@ function getCommunicationRecipientEmails_() {
     GEAPA_CORE.coreLogInfo(runId, 'Comunicação: destinatário(s) encontrado(s)', {
       count: emails.length,
       emails: emails,
-      occupationName: occupationName
+      preferredOccupationName: preferredOccupationName,
+      queries: queries
     });
 
     return emails;

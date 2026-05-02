@@ -23,7 +23,7 @@ const COMMS_SHEET_UX = Object.freeze({
     'Campo Data Origem': 'Nome exato da coluna da fonte que contem a data de referencia. Ex.: Início Matrículas Online, DATA_OFICIAL_CRIACAO ou DATA_INTEGRACAO.',
     'ID_Semestre': 'Semestre fixo a usar quando nao for o vigente. Ex.: 2026/1.',
     'Usar Semestre Vigente': 'Se SIM, ignora ID_Semestre e usa o semestre vigente calculado pelo core.',
-    'Data Disparo Manual': 'Data fixa de disparo para modos DATA_MANUAL ou execucoes manuais. Ex.: 31/03/2026.',
+    'Data Disparo Manual': 'Data fixa de disparo para modos DATA_MANUAL ou execucoes manuais. Use `DD/MM` para recorrencia anual fixa, como `25/12`, ou `DD/MM/AAAA` para uma data pontual.',
     'Modo Destinatario': 'Regra de resolucao dos destinatarios. Use FIXO, LISTA_FIXA, MEMBERS_ATUAIS, PROFESSORES, MEMBERS_E_PROFESSORES, EMAIL_GROUP ou EVENT_SOURCE_EMAIL.',
     'Email Fixo': 'Email unico usado quando Modo Destinatario = FIXO. Ex.: comunicacao@exemplo.com.',
     'Lista Emails Fixos': 'Lista separada por virgula, ponto e virgula ou quebra de linha. Usada em LISTA_FIXA.',

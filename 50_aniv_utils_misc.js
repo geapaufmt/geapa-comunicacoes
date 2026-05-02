@@ -68,3 +68,32 @@ function aniv_formatOccupationDisplay_(occupation) {
   var value = String(occupation || '').trim();
   return value ? aniv_getOccupationLabel_() + ': ' + value : '';
 }
+
+function aniv_getCommunicationOccupationSemanticConfig_() {
+  return (typeof ANIV_SEMANTIC_FIELDS !== 'undefined' && ANIV_SEMANTIC_FIELDS.COMMUNICATION_OCCUPATION)
+    ? ANIV_SEMANTIC_FIELDS.COMMUNICATION_OCCUPATION
+    : Object.freeze({
+        label: 'Diretor(a) de Comunicação',
+        roleKey: 'DIRETOR_COMUNICACAO',
+        aliases: Object.freeze([
+          'Diretor(a) de Comunicação',
+          'Diretor de Comunicação',
+          'DIRETOR_COMUNICACAO',
+          'Coordenador(a) de Comunicação',
+          'Coordenador de Comunicação',
+          'COORDENADOR_COMUNICACAO'
+        ])
+      });
+}
+
+function aniv_getCommunicationOccupationLabel_() {
+  return String(aniv_getCommunicationOccupationSemanticConfig_().label || 'Diretor(a) de Comunicação');
+}
+
+function aniv_getCommunicationOccupationRoleKey_() {
+  return String(aniv_getCommunicationOccupationSemanticConfig_().roleKey || 'DIRETOR_COMUNICACAO');
+}
+
+function aniv_getCommunicationOccupationAliases_() {
+  return aniv_getCommunicationOccupationSemanticConfig_().aliases || [];
+}

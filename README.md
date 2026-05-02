@@ -27,11 +27,14 @@ Camada centralizada desta etapa:
 - resolucao centralizada do campo semantico em [00_aniv_config.js](/C:/Users/Windows%2010/geapa-comemoracoes/00_aniv_config.js) e [50_aniv_utils_misc.js](/C:/Users/Windows%2010/geapa-comemoracoes/50_aniv_utils_misc.js)
 - preferencia por `Ocupação` em novos textos visiveis, e-mails e labels
 - preservacao do alias legado `COL_ROLE` para nao quebrar chamadas internas ou integracoes antigas
+- para a lideranca institucional de comunicacao, o nome principal vigente passa a ser `Diretor(a) de Comunicação`, com compatibilidade para `Coordenador(a) de Comunicação`, `Coordenador de Comunicação` e `COORDENADOR_COMUNICACAO`
+- para a ocupacao institucional de comunicacao, o modulo agora trata `Diretor(a) de Comunicação` como nome principal e continua aceitando `Diretor de Comunicação`, `DIRETOR_COMUNICACAO`, `Coordenador(a) de Comunicação`, `Coordenador de Comunicação` e `COORDENADOR_COMUNICACAO`
 
 Observacao importante:
 
 - este modulo hoje le e exibe a ocupacao dos membros, mas nao persiste esse campo de volta nas bases oficiais
 - para futuras escritas, use `aniv_resolveOccupationHeaderForWrite_(headers)` para priorizar `Ocupação` quando ela existir e cair para o cabecalho legado presente na aba
+- os destinatarios institucionais da comunicacao passam a resolver por catalogo compativel de ocupacao em vez de depender de um nome unico hardcoded
 
 ## Arquitetura
 
@@ -67,6 +70,54 @@ Estruturas principais:
 
 Nao ha mais dependencia estrutural de `Avisos_Config`, `Avisos_Log` nem de `DatasComemorativas`.
 Os wrappers antigos foram mantidos apenas para compatibilidade de nomes de funcoes, sem reutilizar essas abas.
+
+## Controle Operacional
+
+O modulo agora consulta a camada central de controle operacional do `GEAPA-CORE` antes de executar seus fluxos principais.
+
+API publica usada do core:
+
+- `coreGetModuleConfig(moduleName, flowName, opts)`
+- `coreAssertModuleExecutionAllowed(moduleName, flowName, capability, opts)`
+
+Regra de resolucao aplicada pelo core:
+
+- primeiro `MODULO + FLUXO`
+- depois fallback em `MODULO + GERAL`
+- o core ainda pode aplicar fallback seguro de ambiente conforme a propria regra de `MODULOS_CONFIG`
+
+Modulo operacional consultado:
+
+- `COMUNICACOES`
+
+Fluxos cobertos nesta etapa:
+
+- `PROCESSAR_AGENDADAS` com capability `SYNC`
+- `PROCESSAR_FILA` com capability `EMAIL`
+- `PROCESSAR_FILA` com capability `SYNC` para a sincronizacao manual do log operacional
+- `ANIVERSARIOS_MEMBROS` com capability `EMAIL`
+- `ANIVERSARIOS_PROFESSORES` com capability `EMAIL`
+- `RESUMO_SEMANAL` com capability `EMAIL`
+- `MANUAIS` com capability `EMAIL`
+- `GERAL` como fallback automatico provido pelo core quando nao houver linha especifica do fluxo
+
+Semantica de `MODO` consumida do core:
+
+- `ON`: execucao operacional normal
+- `OFF`: bloqueia o fluxo e a funcao sai de forma limpa
+- `MANUAL`: bloqueia execucao por trigger, mas continua permitindo chamadas manuais
+- `DRY_RUN`: executa apenas leitura, diagnostico e logs; o modulo nao enfileira emails, nao processa a fila central e nao sincroniza escritas destrutivas
+
+Registro minimo em `MODULOS_STATUS`:
+
+- ultimo bloqueio por config
+- motivo do bloqueio
+- ultimo modo lido
+- ultima capability
+- ultimo tipo de execucao
+- ultimo erro relevante
+- ultimo sucesso relevante
+- ultimo dry run relevante
 
 ## O Que E Dirigido Por Config
 
@@ -135,6 +186,8 @@ Observacao:
 - `MANUAL` nao entra no processamento automatico diario
 - `MANUAL` deve ser disparado por `queueCommunicationByCode(...)`
 - `ANIVERSARIO_INTEGRACAO_ANUAL` usa `DATA_INTEGRACAO` como fonte de verdade e dispara apenas no aniversario anual exato
+- `DATA_MANUAL` agora aceita tanto `DD/MM/AAAA` quanto `DD/MM`
+- quando a linha usar apenas `DD/MM`, o modulo trata a data como recorrencia anual fixa e projeta o disparo para o ano corrente
 
 ### Modos de destinatario
 

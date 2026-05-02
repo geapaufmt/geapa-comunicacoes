@@ -41,6 +41,16 @@ function aniv_parseDateAny_(raw) {
   return isNaN(t) ? null : new Date(t);
 }
 
+function aniv_isMonthDayOnlyDateValue_(raw) {
+  if (raw == null || raw === '') return false;
+  if (raw instanceof Date && !isNaN(raw.getTime())) return false;
+
+  var s = String(raw).trim();
+  if (!s) return false;
+
+  return /^(\d{1,2})[\/\-\.](\d{1,2})$/.test(s);
+}
+
 function aniv_normalizeToYear_(date, year) {
   const d = new Date(date);
   return new Date(Number(year), d.getMonth(), d.getDate());

@@ -6,50 +6,109 @@
  * de menus, testes manuais e triggers antigos durante a migracao.
  */
 
-function processAcademicNoticesToday() {
-  return comms_processConfiguredDaily_();
+function processAcademicNoticesToday(opts) {
+  opts = opts || {};
+  return comms_runOperationalFlow_(
+    ANIV_CFG.COMUNICACOES.OPERABILITY.FLOWS.SCHEDULED,
+    ANIV_CFG.COMUNICACOES.OPERABILITY.CAPABILITIES.SYNC,
+    {
+      executionType: comms_resolveExecutionType_(opts, 'TRIGGER'),
+      defaultExecutionType: 'TRIGGER'
+    },
+    function(ctx) {
+      return comms_processConfiguredDaily_({
+        dryRun: ctx.dryRun === true
+      });
+    }
+  );
 }
 
-function processConfiguredCommunicationsToday() {
-  return comms_processConfiguredDaily_();
+function processConfiguredCommunicationsToday(opts) {
+  return processAcademicNoticesToday(opts || {});
 }
 
-function processScheduledCommunicationsToday() {
-  return comms_processConfiguredDaily_();
+function processScheduledCommunicationsToday(opts) {
+  return processAcademicNoticesToday(opts || {});
 }
 
-function runScheduledCommunicationsToday() {
-  return processScheduledCommunicationsToday();
+function runScheduledCommunicationsToday(opts) {
+  return processScheduledCommunicationsToday(opts || {});
 }
 
-function processDailyCommunications() {
-  return processScheduledCommunicationsToday();
+function processDailyCommunications(opts) {
+  return processScheduledCommunicationsToday(opts || {});
 }
 
-function processAcademicNoticeOutbox() {
-  return comms_processOutboxAndSync_();
+function processAcademicNoticeOutbox(opts) {
+  opts = opts || {};
+  return comms_runOperationalFlow_(
+    ANIV_CFG.COMUNICACOES.OPERABILITY.FLOWS.OUTBOX,
+    ANIV_CFG.COMUNICACOES.OPERABILITY.CAPABILITIES.EMAIL,
+    {
+      executionType: comms_resolveExecutionType_(opts, 'TRIGGER'),
+      defaultExecutionType: 'TRIGGER'
+    },
+    function(ctx) {
+      return comms_processOutboxAndSync_({
+        dryRun: ctx.dryRun === true
+      });
+    }
+  );
 }
 
-function processCommunicationsOutbox() {
-  return comms_processOutboxAndSync_();
+function processCommunicationsOutbox(opts) {
+  return processAcademicNoticeOutbox(opts || {});
 }
 
-function runCommunicationsOutbox() {
-  return processCommunicationsOutbox();
+function runCommunicationsOutbox(opts) {
+  return processCommunicationsOutbox(opts || {});
 }
 
-function syncCommunicationsOperationalLog() {
-  return syncCommunicationsLog();
+function syncCommunicationsOperationalLog(opts) {
+  return syncCommunicationsLog(opts || {});
 }
 
 function queueCommunicationByCode(code, opts) {
-  return comms_queueCommunicationByCode_(code, opts || {});
+  opts = opts || {};
+  return comms_runOperationalFlow_(
+    ANIV_CFG.COMUNICACOES.OPERABILITY.FLOWS.MANUALS,
+    ANIV_CFG.COMUNICACOES.OPERABILITY.CAPABILITIES.EMAIL,
+    {
+      executionType: comms_resolveExecutionType_(opts, 'MANUAL'),
+      defaultExecutionType: 'MANUAL'
+    },
+    function(ctx) {
+      var queueOpts = Object.assign({}, opts, {
+        dryRun: ctx.dryRun === true
+      });
+      return comms_queueCommunicationByCode_(code, queueOpts);
+    }
+  );
 }
 
 function aniv_syncAcademicNoticeLog_() {
-  return comms_syncLogWithOutbox_();
+  return syncCommunicationsLog({ executionType: 'MANUAL' });
 }
 
-function syncCommunicationsLog() {
-  return comms_syncLogWithOutbox_();
+function syncCommunicationsLog(opts) {
+  opts = opts || {};
+  return comms_runOperationalFlow_(
+    ANIV_CFG.COMUNICACOES.OPERABILITY.FLOWS.OUTBOX,
+    ANIV_CFG.COMUNICACOES.OPERABILITY.CAPABILITIES.SYNC,
+    {
+      executionType: comms_resolveExecutionType_(opts, 'MANUAL'),
+      defaultExecutionType: 'MANUAL'
+    },
+    function(ctx) {
+      if (ctx.dryRun === true) {
+        return Object.freeze({
+          ok: true,
+          dryRun: true,
+          skipped: true,
+          reason: 'DRY_RUN'
+        });
+      }
+      return comms_syncLogWithOutbox_();
+    }
+  );
 }

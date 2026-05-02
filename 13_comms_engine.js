@@ -122,11 +122,13 @@ function comms_createCounters_() {
     matchedConfigs: 0,
     generatedBundles: 0,
     queued: 0,
+    simulatedQueues: 0,
     requeued: 0,
     duplicates: 0,
     withoutRecipients: 0,
     errors: 0,
-    errorDetails: []
+    errorDetails: [],
+    dryRun: false
   };
 }
 
@@ -137,11 +139,13 @@ function comms_mergeCounters_(target, source) {
   target.matchedConfigs += Number(source.matchedConfigs || 0);
   target.generatedBundles += Number(source.generatedBundles || 0);
   target.queued += Number(source.queued || 0);
+  target.simulatedQueues += Number(source.simulatedQueues || 0);
   target.requeued += Number(source.requeued || 0);
   target.duplicates += Number(source.duplicates || 0);
   target.withoutRecipients += Number(source.withoutRecipients || 0);
   target.errors += Number(source.errors || 0);
   target.errorDetails = (target.errorDetails || []).concat(source.errorDetails || []);
+  target.dryRun = target.dryRun === true || source.dryRun === true;
   return target;
 }
 
@@ -978,9 +982,13 @@ function comms_buildConfigBundles_(configRecord, today, opts) {
   var triggerMode = comms_normalizeText_(comms_getConfigValue_(configRecord, headers.triggerMode));
   if (triggerMode === 'MANUAL' && opts.forceManual !== true) return [];
 
-  var manualDate = aniv_parseDateAny_(comms_getConfigValue_(configRecord, headers.manualDate));
+  var manualDateRaw = comms_getConfigValue_(configRecord, headers.manualDate);
+  var manualDate = aniv_parseDateAny_(manualDateRaw);
   if (!manualDate && opts.forceManual !== true) return [];
   if (!manualDate) manualDate = aniv_startOfDay_(opts.manualRunDate || today);
+  if (manualDate && aniv_isMonthDayOnlyDateValue_(manualDateRaw)) {
+    manualDate = aniv_normalizeToYearWithFeb28Fallback_(manualDate, today.getFullYear());
+  }
 
   var beforeDays = comms_parseInteger_(comms_getConfigValue_(configRecord, headers.daysBefore), 0);
   var afterDays = comms_parseInteger_(comms_getConfigValue_(configRecord, headers.daysAfter), 0);
@@ -1032,6 +1040,7 @@ function comms_processConfigRows_(today, filterFn, opts) {
   var runId = GEAPA_CORE.coreRunId();
   var counters = comms_createCounters_();
   opts = opts || {};
+  counters.dryRun = opts.dryRun === true;
 
   for (var i = 0; i < rows.length; i++) {
     var configRow = rows[i];
@@ -1070,6 +1079,18 @@ function comms_processConfigRows_(today, filterFn, opts) {
         var recipientCount = contract.to.length + contract.bcc.length;
         if (!recipientCount) {
           counters.withoutRecipients++;
+          continue;
+        }
+
+        if (opts.dryRun === true) {
+          counters.simulatedQueues++;
+          GEAPA_CORE.coreLogInfo(runId, 'comms_processConfigRows_: DRY_RUN, comunicacao simulada', {
+            communicationCode: String(comms_getConfigValue_(configRow, headers.communicationCode) || '').trim(),
+            correlationKey: contract.correlationKey,
+            recipientCount: recipientCount,
+            flowType: String(comms_getConfigValue_(configRow, headers.flowType) || '').trim(),
+            eventSource: String(comms_getConfigValue_(configRow, headers.eventSource) || '').trim()
+          });
           continue;
         }
 
@@ -1203,6 +1224,7 @@ function comms_queueCommunicationByCode_(code, opts) {
   return comms_processConfigRows_(manualDate, function(row) {
     return row.__rowNumber === configRow.__rowNumber;
   }, {
+    dryRun: opts.dryRun === true,
     forceManual: true,
     manualRunDate: manualDate,
     isManual: true,
@@ -1256,16 +1278,16 @@ function comms_previewCommunicationByCode_(code, opts) {
   });
 }
 
-function comms_processBirthdaysTodayBySource_(source) {
+function comms_processBirthdaysTodayBySource_(source, opts) {
   var today = aniv_startOfDay_(aniv_now_());
   return comms_processConfigRows_(today, function(configRow) {
     var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
     return comms_normalizeText_(comms_getConfigValue_(configRow, headers.eventSource)) === comms_normalizeText_(source) &&
       comms_normalizeText_(comms_getConfigValue_(configRow, headers.triggerMode)) === 'DATA_ORIGEM';
-  });
+  }, opts || {});
 }
 
-function comms_processBirthdaysWeeklyBySource_(source) {
+function comms_processBirthdaysWeeklyBySource_(source, opts) {
   var today = aniv_startOfDay_(aniv_now_());
   if (today.getDay() !== 1) {
     return Object.freeze({ skipped: true, reason: 'NOT_MONDAY' });
@@ -1274,10 +1296,10 @@ function comms_processBirthdaysWeeklyBySource_(source) {
     var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
     return comms_normalizeText_(comms_getConfigValue_(configRow, headers.eventSource)) === comms_normalizeText_(source) &&
       comms_normalizeText_(comms_getConfigValue_(configRow, headers.triggerMode)) === 'RESUMO_SEMANAL';
-  });
+  }, opts || {});
 }
 
-function comms_processConfiguredDaily_() {
+function comms_processConfiguredDaily_(opts) {
   var today = aniv_startOfDay_(aniv_now_());
   return comms_processConfigRows_(today, function(configRow) {
     var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
@@ -1287,10 +1309,30 @@ function comms_processConfiguredDaily_() {
     return (source === 'VIGENCIA_SEMESTRES' && triggerMode === 'DATA_ORIGEM') ||
       (source === 'DADOS_OFICIAIS_GEAPA' && triggerMode === 'DATA_ORIGEM') ||
       (source === 'CONFIG' && triggerMode === 'DATA_MANUAL');
-  });
+  }, opts || {});
 }
 
-function comms_processOutboxAndSync_() {
+function comms_processOutboxAndSync_(opts) {
+  opts = opts || {};
+
+  if (opts.dryRun === true) {
+    var pending = GEAPA_CORE.coreMailListPendingByModule(ANIV_CFG.COMUNICACOES.MODULE_NAME) || [];
+    return Object.freeze({
+      ok: true,
+      dryRun: true,
+      pendingCount: pending.length,
+      pendingPreview: pending.slice(0, 5),
+      outbox: Object.freeze({
+        skipped: true,
+        reason: 'DRY_RUN'
+      }),
+      logSync: Object.freeze({
+        skipped: true,
+        reason: 'DRY_RUN'
+      })
+    });
+  }
+
   return Object.freeze({
     ok: true,
     outbox: GEAPA_CORE.coreMailProcessOutbox(),

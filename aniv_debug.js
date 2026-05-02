@@ -22,11 +22,11 @@ function pingEmail() {
 }
 
 function debugAcademicNoticesToday() {
-  Logger.log(JSON.stringify(comms_processConfiguredDaily_(), null, 2));
+  Logger.log(JSON.stringify(processAcademicNoticesToday({ executionType: 'MANUAL' }), null, 2));
 }
 
 function debugConfiguredCommunicationsToday() {
-  Logger.log(JSON.stringify(comms_processConfiguredDaily_(), null, 2));
+  Logger.log(JSON.stringify(processConfiguredCommunicationsToday({ executionType: 'MANUAL' }), null, 2));
 }
 
 function debugAcademicNoticeConfigs() {
@@ -74,7 +74,10 @@ function writeCommunicationsValidationReportNow() {
 }
 
 function previewCommunicationByCodeNow(code) {
-  Logger.log(JSON.stringify(previewCommunicationByCode(code, { force: true }), null, 2));
+  Logger.log(JSON.stringify(previewCommunicationByCode(code, {
+    force: true,
+    executionType: 'MANUAL'
+  }), null, 2));
 }
 
 function previewFirstManualCommunicationNow() {
@@ -82,23 +85,26 @@ function previewFirstManualCommunicationNow() {
 }
 
 function queueAcademicNoticesToday() {
-  Logger.log(JSON.stringify(processAcademicNoticesToday(), null, 2));
+  Logger.log(JSON.stringify(processAcademicNoticesToday({ executionType: 'MANUAL' }), null, 2));
 }
 
 function queueConfiguredCommunicationsToday() {
-  Logger.log(JSON.stringify(processConfiguredCommunicationsToday(), null, 2));
+  Logger.log(JSON.stringify(processConfiguredCommunicationsToday({ executionType: 'MANUAL' }), null, 2));
 }
 
 function queueScheduledCommunicationsToday() {
-  Logger.log(JSON.stringify(processScheduledCommunicationsToday(), null, 2));
+  Logger.log(JSON.stringify(processScheduledCommunicationsToday({ executionType: 'MANUAL' }), null, 2));
 }
 
 function queueCommunicationByCodeNow(code) {
-  Logger.log(JSON.stringify(queueCommunicationByCode(code), null, 2));
+  Logger.log(JSON.stringify(queueCommunicationByCode(code, { executionType: 'MANUAL' }), null, 2));
 }
 
 function resendCommunicationByCodeNow(code) {
-  Logger.log(JSON.stringify(queueCommunicationByCode(code, { resend: true }), null, 2));
+  Logger.log(JSON.stringify(queueCommunicationByCode(code, {
+    resend: true,
+    executionType: 'MANUAL'
+  }), null, 2));
 }
 
 function queueFirstManualCommunicationToday() {
@@ -111,7 +117,10 @@ function queueFirstManualCommunicationToday() {
 
     Logger.log(JSON.stringify(queueCommunicationByCode(
       String(comms_getConfigValue_(rows[i], headers.communicationCode) || '').trim(),
-      { force: true }
+      {
+        force: true,
+        executionType: 'MANUAL'
+      }
     ), null, 2));
     return;
   }
@@ -133,7 +142,10 @@ function resendFirstManualCommunicationToday() {
 
     Logger.log(JSON.stringify(queueCommunicationByCode(
       String(comms_getConfigValue_(rows[i], headers.communicationCode) || '').trim(),
-      { resend: true }
+      {
+        resend: true,
+        executionType: 'MANUAL'
+      }
     ), null, 2));
     return;
   }
@@ -145,57 +157,93 @@ function resendFirstManualCommunicationToday() {
 }
 
 function queueMemberBirthdaysToday() {
-  Logger.log(JSON.stringify(checkBirthdaysToday(), null, 2));
+  Logger.log(JSON.stringify(checkBirthdaysToday({ executionType: 'MANUAL' }), null, 2));
 }
 
 function queueProfessorBirthdaysToday() {
-  Logger.log(JSON.stringify(checkProfsBirthdaysToday(), null, 2));
+  Logger.log(JSON.stringify(checkProfsBirthdaysToday({ executionType: 'MANUAL' }), null, 2));
 }
 
 function queueMemberBirthdaysWeekly() {
-  Logger.log(JSON.stringify(weeklyBirthdayDigest(), null, 2));
+  Logger.log(JSON.stringify(weeklyBirthdayDigest({ executionType: 'MANUAL' }), null, 2));
 }
 
 function queueMemberBirthdaysWeeklyForceToday() {
-  Logger.log(JSON.stringify(comms_processConfigRows_(aniv_startOfDay_(aniv_now_()), function(configRow) {
-    var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
-    return comms_normalizeText_(comms_getConfigValue_(configRow, headers.eventSource)) === 'MEMBERS_ATUAIS' &&
-      comms_normalizeText_(comms_getConfigValue_(configRow, headers.triggerMode)) === 'RESUMO_SEMANAL';
-  }), null, 2));
+  Logger.log(JSON.stringify(comms_runOperationalFlow_(
+    ANIV_CFG.COMUNICACOES.OPERABILITY.FLOWS.WEEKLY_SUMMARY,
+    ANIV_CFG.COMUNICACOES.OPERABILITY.CAPABILITIES.EMAIL,
+    {
+      executionType: 'MANUAL',
+      defaultExecutionType: 'MANUAL'
+    },
+    function(ctx) {
+      return comms_processConfigRows_(aniv_startOfDay_(aniv_now_()), function(configRow) {
+        var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
+        return comms_normalizeText_(comms_getConfigValue_(configRow, headers.eventSource)) === 'MEMBERS_ATUAIS' &&
+          comms_normalizeText_(comms_getConfigValue_(configRow, headers.triggerMode)) === 'RESUMO_SEMANAL';
+      }, {
+        dryRun: ctx.dryRun === true
+      });
+    }
+  ), null, 2));
 }
 
 function queueProfessorBirthdaysWeekly() {
-  Logger.log(JSON.stringify(weeklyProfsBirthdayDigest(), null, 2));
+  Logger.log(JSON.stringify(weeklyProfsBirthdayDigest({ executionType: 'MANUAL' }), null, 2));
 }
 
 function queueProfessorBirthdaysWeeklyForceToday() {
-  Logger.log(JSON.stringify(comms_processConfigRows_(aniv_startOfDay_(aniv_now_()), function(configRow) {
-    var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
-    return comms_normalizeText_(comms_getConfigValue_(configRow, headers.eventSource)) === 'PROFESSORES' &&
-      comms_normalizeText_(comms_getConfigValue_(configRow, headers.triggerMode)) === 'RESUMO_SEMANAL';
-  }), null, 2));
+  Logger.log(JSON.stringify(comms_runOperationalFlow_(
+    ANIV_CFG.COMUNICACOES.OPERABILITY.FLOWS.WEEKLY_SUMMARY,
+    ANIV_CFG.COMUNICACOES.OPERABILITY.CAPABILITIES.EMAIL,
+    {
+      executionType: 'MANUAL',
+      defaultExecutionType: 'MANUAL'
+    },
+    function(ctx) {
+      return comms_processConfigRows_(aniv_startOfDay_(aniv_now_()), function(configRow) {
+        var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
+        return comms_normalizeText_(comms_getConfigValue_(configRow, headers.eventSource)) === 'PROFESSORES' &&
+          comms_normalizeText_(comms_getConfigValue_(configRow, headers.triggerMode)) === 'RESUMO_SEMANAL';
+      }, {
+        dryRun: ctx.dryRun === true
+      });
+    }
+  ), null, 2));
 }
 
 function queueMemberIntegrationAnniversariesToday() {
-  Logger.log(JSON.stringify(comms_processConfigRows_(aniv_startOfDay_(aniv_now_()), function(configRow) {
-    var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
-    return comms_normalizeText_(comms_getConfigValue_(configRow, headers.eventSource)) === 'MEMBERS_ATUAIS' &&
-      comms_normalizeText_(comms_getConfigValue_(configRow, headers.triggerMode)) === 'ANIVERSARIO_INTEGRACAO_ANUAL';
-  }), null, 2));
+  Logger.log(JSON.stringify(comms_runOperationalFlow_(
+    ANIV_CFG.COMUNICACOES.OPERABILITY.FLOWS.SCHEDULED,
+    ANIV_CFG.COMUNICACOES.OPERABILITY.CAPABILITIES.SYNC,
+    {
+      executionType: 'MANUAL',
+      defaultExecutionType: 'MANUAL'
+    },
+    function(ctx) {
+      return comms_processConfigRows_(aniv_startOfDay_(aniv_now_()), function(configRow) {
+        var headers = ANIV_CFG.COMUNICACOES.CONFIG_HEADERS;
+        return comms_normalizeText_(comms_getConfigValue_(configRow, headers.eventSource)) === 'MEMBERS_ATUAIS' &&
+          comms_normalizeText_(comms_getConfigValue_(configRow, headers.triggerMode)) === 'ANIVERSARIO_INTEGRACAO_ANUAL';
+      }, {
+        dryRun: ctx.dryRun === true
+      });
+    }
+  ), null, 2));
 }
 
 function syncAcademicNoticeLog() {
-  Logger.log(JSON.stringify(comms_syncLogWithOutbox_(), null, 2));
+  Logger.log(JSON.stringify(syncCommunicationsLog({ executionType: 'MANUAL' }), null, 2));
 }
 
 function syncCommunicationsLogNow() {
-  Logger.log(JSON.stringify(syncCommunicationsLog(), null, 2));
+  Logger.log(JSON.stringify(syncCommunicationsLog({ executionType: 'MANUAL' }), null, 2));
 }
 
 function processAcademicOutboxNow() {
-  Logger.log(JSON.stringify(processAcademicNoticeOutbox(), null, 2));
+  Logger.log(JSON.stringify(processAcademicNoticeOutbox({ executionType: 'MANUAL' }), null, 2));
 }
 
 function processCommunicationsOutboxNow() {
-  Logger.log(JSON.stringify(processCommunicationsOutbox(), null, 2));
+  Logger.log(JSON.stringify(processCommunicationsOutbox({ executionType: 'MANUAL' }), null, 2));
 }
